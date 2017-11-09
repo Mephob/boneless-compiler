@@ -8,6 +8,8 @@ public class SyntaxAnalyzerData {
 	private List<String> nonterminalSymbols;
 	private List<String> terminalSymbols;
 	private List<String> syncSymbols;
+	
+	//TODO: make better data structure for this shit
 	private Map<String, List<List<String>>> grammarProductions;
 
 	public SyntaxAnalyzerData(List<String> nonterminalSymbols, List<String> terminalSymbols, List<String> syncSymbols, Map<String, List<List<String>>> grammarProductions) {
