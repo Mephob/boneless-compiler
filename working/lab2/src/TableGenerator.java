@@ -9,7 +9,7 @@ public class TableGenerator {
 
 
 	public static void main(String[] args) {
-		System.out.println(generateENKA(Arrays.asList(
+		System.out.println(generateDKA(Arrays.asList(
 			  "<S>",
 			  " <A>",
 			  "<A>",
@@ -18,6 +18,89 @@ public class TableGenerator {
 			  "<B>",
 			  " a <B>",
 			  " b")));
+	}
+
+
+	private static DKA generateDKA(List<String> lines) {
+		ENKA enka = generateENKA(lines);
+
+		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
+
+		ENKA.ENKAState first = null;
+		for (int i = 0, n = enka.states.size(); i < n; i++) {
+			if (enka.states.get(i).left.equals("<S'>")) {
+				first = enka.states.get(i);
+				break;
+			}
+		}
+
+		DKA result = new DKA();
+		List<ENKA.ENKAState> todo = new ArrayList<>();
+		todo.add(first);
+		Set<ENKA.ENKAState> done = new HashSet<>();
+
+		//add all the states
+		while(!todo.isEmpty()) {
+			Set<ENKA.ENKAState> epsSurrounding = new HashSet<>();
+			epsSurrounding.add(todo.get(0));
+
+			Set<ENKA.ENKAState> diff = new HashSet<>();
+			while (!diff.equals(epsSurrounding)) {
+				diff = new HashSet<>(epsSurrounding);
+				for (ENKA.ENKAState e : diff) {
+					epsSurrounding.addAll(e.eCrossings);
+				}
+			}
+
+			done.addAll(epsSurrounding);
+			epsSurrounding.forEach(s -> {
+				s.crossings.forEach((key, c) -> {
+					if (!done.contains(c) && !todo.contains(c)) {
+						todo.add(c);
+					}
+				});
+
+			});
+			todo.remove(0);
+
+			StringBuilder bob = new StringBuilder();
+			for (ENKA.ENKAState e : epsSurrounding) {
+				bob.append(e.mainString());
+				bob.append(", { ");
+				for (String s : e.finishers) {
+					bob.append(s + ",");
+				}
+				bob.deleteCharAt(bob.length() - 1);
+				bob.append(" }\n");
+			}
+			DKA.DKAState dkaBuff = result.new DKAState(bob.toString());
+			//map nka states to dka states id
+			epsSurrounding.forEach(e -> {
+				if (enkToDkaMap.get(e.id) == null) {
+					enkToDkaMap.put(e.id, new HashSet<>(Arrays.asList(dkaBuff.id)));
+
+				} else {
+					enkToDkaMap.get(e.id).add(dkaBuff.id);
+				}
+			});
+		}
+
+		//connect all the states
+		enka.states.forEach(s -> {
+			Set<Integer> dkaEqList = enkToDkaMap.get(s.id);
+
+			dkaEqList.forEach(dkaEq -> {
+				s.crossings.forEach((key, state) -> {
+					//System.out.println("worikn on:" + dkaEq + ">>>" + key + "--->>>>" + enkToDkaMap.get(state.id));
+					enkToDkaMap.get(state.id).forEach(a -> {
+						result.getForId(dkaEq).crossings.put(key, result.getForId(a));
+					});
+
+				});
+			});
+		});
+
+		return result;
 	}
 
 
@@ -63,13 +146,12 @@ public class TableGenerator {
 					if (!firstDone) {
 						first = current;
 						firstDone = true;
-						//System.out.println(first.mainString());
 					}
 				}
 			}
 		}
 
-		//TODO add eps crossings
+		//add eps crossings
 		for (ENKA.ENKAState e : result.states) {
 			String buff;
 			int i = e.indexOfDot();
@@ -85,7 +167,7 @@ public class TableGenerator {
 			}
 		}
 
-		//TODO {a, b, c} and stuff
+		//{a, b, c} and stuff
 		boolean[][] beginings = new boolean[thingies.size()][thingies.size()];
 		List<String> thingiesList = new ArrayList<>(thingies);
 		for (ENKA.ENKAState enkaS : result.states) {
@@ -108,27 +190,11 @@ public class TableGenerator {
 
 		findBeginings(beginings, thingiesList);
 
-		/*
-		System.out.printf("%5s,","");
-		for (int i = 0; i < beginings.length; i++) {
-			System.out.printf("%5s,",thingiesList.get(i));
-		}
-		System.out.println();
-		for (int i = 0; i < beginings.length; i++) {
-			System.out.printf("%5s,",thingiesList.get(i));
-			for (int j = 0; j < beginings.length; j++) {
-				System.out.printf("%5d,",beginings[i][j] ? 1: 0);
-			}
-			System.out.println();
-		}*/
-
 		first.propagateFinishers(Arrays.asList("~"));
 		first.calcluateChildEpsFinishers(beginings, thingiesList);
 
 
-		//TODO to DKA
 
-		//TODO to consumer<String> 2D table
 
 		ENKA.ENKAState buff = result.new ENKAState("<S'>", lines.get(0).split(" "));
 
@@ -170,12 +236,8 @@ public class TableGenerator {
 
 			finish = true;
 			for (boolean b : done) {
-				//System.out.println(b);
-				//System.out.println(elements.get());
 				finish &= b;
 			}
-
-			//System.out.println(finish);
 		}
 	}
 
@@ -184,11 +246,74 @@ public class TableGenerator {
 
 	private static class DKA {
 
-		List<DKAState> states;
+		private int n = 0;
+		List<DKAState> states = new ArrayList<>();
+
+		private DKAState getForId(int id) {
+			return states.get(id-1);
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder bob = new StringBuilder();
+
+			for (DKAState dnkaS : states) {
+				bob.append(dnkaS.toString());
+				bob.append('\n');
+				bob.append("--------------------------------");
+				bob.append('\n');
+			}
+
+			return bob.toString();
+		}
 
 		private class DKAState {
-			private String name;
-			private Map<Character, DKAState> crossings;
+
+			private int id;
+			private String text;
+			private Map<String, DKAState> crossings = new HashMap<>();
+
+			private DKAState(String text) {
+				id = ++n;
+				this.text = text;
+				states.add(this);
+			}
+
+			@Override
+			public boolean equals(Object o) {
+				if (this == o) return true;
+				if (o == null || getClass() != o.getClass()) return false;
+
+				DKAState dkaState = (DKAState) o;
+
+				return id == dkaState.id;
+			}
+
+			@Override
+			public int hashCode() {
+				return id;
+			}
+
+			@Override
+			public String toString() {
+				StringBuilder bob = new StringBuilder();
+				bob.append(id);
+				bob.append('\n');
+				bob.append(text);
+
+				for (String s : crossings.keySet()) {
+					bob.append('\n');
+					bob.append("  ");
+
+					bob.append('-');
+					bob.append(s);
+					bob.append("->");
+
+					bob.append("(" + crossings.get(s).id + ")");
+				}
+
+				return bob.toString();
+			}
 		}
 	}
 
@@ -196,6 +321,7 @@ public class TableGenerator {
 
 	private static class ENKA {
 
+		private int n;
 		List<ENKAState> states = new ArrayList<>();
 
 		@Override
@@ -213,6 +339,7 @@ public class TableGenerator {
 		}
 
 		private class ENKAState {
+			private int id;
 			private String left;
 			private String[] right;
 			private Map<String, ENKAState> crossings = new HashMap<>();
@@ -221,6 +348,7 @@ public class TableGenerator {
 			private boolean epsCalculated = false;
 
 			public ENKAState(String left, String[] right) {
+				id = ++n;
 				states.add(this);
 				this.left = left;
 				this.right = right;
@@ -280,6 +408,21 @@ public class TableGenerator {
 				for (String s : crossings.keySet()) {
 					crossings.get(s).propagateFinishers(finishers);
 				}
+			}
+
+			@Override
+			public boolean equals(Object o) {
+				if (this == o) return true;
+				if (o == null || getClass() != o.getClass()) return false;
+
+				ENKAState enkaState = (ENKAState) o;
+
+				return id == enkaState.id;
+			}
+
+			@Override
+			public int hashCode() {
+				return id;
 			}
 
 			@Override
