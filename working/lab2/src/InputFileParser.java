@@ -19,36 +19,55 @@ public class InputFileParser {
 	}
 
 	private void parse(Scanner sc) {
-		List<String> nonterminalSymbols = null;
-		List<String> terminalSymbols = null;
-		List<String> syncSymbols = null;
-		
-		//TODO: create a more practical data structure for this
-		Map<String, List<List<String>>> grammarProductions = new HashMap<>(); 
-		
+		List<NonterminalSymbol> nonterminalSymbols = new ArrayList<>();
+		List<TerminalSymbol> terminalSymbols = new ArrayList<>();
+		List<SynchronizingSymbol> syncSymbols = new ArrayList<>();
+		List<GrammarProductionRule> grammarProductionRules = new ArrayList<>();
+
 		int lineNum = 0;
+		String currentStartSymbol = null;
 		while (sc.hasNextLine()) {
 			String line = sc.nextLine();
 			lineNum++;
 
 			switch (lineNum) {
 				case 1: // non-terminal symbols in the first line
-					nonterminalSymbols = Arrays.asList(line.substring(3).split(" "));
+					for (String value : line.substring(3).split(" ")) {
+						nonterminalSymbols.add(new NonterminalSymbol(value));
+					}
 					break;
 				case 2: // terminal symbols in the second line
-					terminalSymbols = Arrays.asList(line.substring(3).split(" "));
+					for (String value : line.substring(3).split(" ")) {
+						terminalSymbols.add(new TerminalSymbol(value));
+					}
 					break;
 				case 3: // symbols for synchronization in the third line
-					syncSymbols = Arrays.asList(line.substring(5).split(" "));
+					for (String value : line.substring(5).split(" ")) {
+						syncSymbols.add(new SynchronizingSymbol(value));
+					}
 					break;
 				default:
-					//TODO: parsing grammar productions
+					if (line.startsWith(" ")) {
+						grammarProductionRules.add(createProduction(currentStartSymbol, line.trim()));
+					} else {
+						currentStartSymbol = line.trim();
+					}
 
 			}
 		}
 
-		data = new SyntaxAnalyzerData(nonterminalSymbols, terminalSymbols, syncSymbols, grammarProductions);
+		data = new SyntaxAnalyzerData(nonterminalSymbols, terminalSymbols, syncSymbols, grammarProductionRules);
 	}
 
+	private GrammarProductionRule createProduction(String currentStartSymbol, String line) {
+		List<Symbol> rule = new ArrayList<>();
+		for (String value : line.split(" ")) {
+			rule.add(value.startsWith("<") ? new NonterminalSymbol(value) : new TerminalSymbol(value));
+		}
+		return new GrammarProductionRule(currentStartSymbol, rule);
+	}
 
+	public SyntaxAnalyzerData getData() {
+		return data;
+	}
 }
