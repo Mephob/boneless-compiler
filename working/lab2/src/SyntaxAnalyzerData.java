@@ -8,15 +8,13 @@ public class SyntaxAnalyzerData {
 	private List<String> nonterminalSymbols;
 	private List<String> terminalSymbols;
 	private List<String> syncSymbols;
-	
-	//TODO: make better data structure for this shit
-	private Map<String, List<List<String>>> grammarProductions;
+	private List<String> grammarProductionsRaw;
 
-	public SyntaxAnalyzerData(List<String> nonterminalSymbols, List<String> terminalSymbols, List<String> syncSymbols, Map<String, List<List<String>>> grammarProductions) {
+	public SyntaxAnalyzerData(List<String> nonterminalSymbols, List<String> terminalSymbols, List<String> syncSymbols, List<String> grammarProductionsRaw) {
 		this.nonterminalSymbols = nonterminalSymbols;
 		this.terminalSymbols = terminalSymbols;
 		this.syncSymbols = syncSymbols;
-		this.grammarProductions = grammarProductions;
+		this.grammarProductionsRaw = grammarProductionsRaw;
 	}
 
 	public List<String> getNonterminalSymbols() {
@@ -31,7 +29,7 @@ public class SyntaxAnalyzerData {
 		return syncSymbols;
 	}
 
-	public Map<String, List<List<String>>> getGrammarProductions() {
-		return grammarProductions;
+	public List<String> getGrammarProductionsRaw() {
+		return grammarProductionsRaw;
 	}
 }

@@ -19,52 +19,32 @@ public class InputFileParser {
 	}
 
 	private void parse(Scanner sc) {
-		List<NonterminalSymbol> nonterminalSymbols = new ArrayList<>();
-		List<TerminalSymbol> terminalSymbols = new ArrayList<>();
-		List<SynchronizingSymbol> syncSymbols = new ArrayList<>();
-		List<GrammarProductionRule> grammarProductionRules = new ArrayList<>();
+		List<String> nonterminalSymbols = new ArrayList<>();
+		List<String> terminalSymbols = new ArrayList<>();
+		List<String> syncSymbols = new ArrayList<>();
+		List<String> grammarProductionsRaw = new ArrayList<>();
 
 		int lineNum = 0;
-		String currentStartSymbol = null;
 		while (sc.hasNextLine()) {
 			String line = sc.nextLine();
 			lineNum++;
 
 			switch (lineNum) {
 				case 1: // non-terminal symbols in the first line
-					for (String value : line.substring(3).split(" ")) {
-						nonterminalSymbols.add(new NonterminalSymbol(value));
-					}
+					nonterminalSymbols = Arrays.asList(line.substring(3).split(" "));
 					break;
 				case 2: // terminal symbols in the second line
-					for (String value : line.substring(3).split(" ")) {
-						terminalSymbols.add(new TerminalSymbol(value));
-					}
+					terminalSymbols = Arrays.asList(line.substring(3).split(" "));
 					break;
 				case 3: // symbols for synchronization in the third line
-					for (String value : line.substring(5).split(" ")) {
-						syncSymbols.add(new SynchronizingSymbol(value));
-					}
+					syncSymbols = Arrays.asList(line.substring(5).split(" "));
 					break;
 				default:
-					if (line.startsWith(" ")) {
-						grammarProductionRules.add(createProduction(currentStartSymbol, line.trim()));
-					} else {
-						currentStartSymbol = line.trim();
-					}
-
+					grammarProductionsRaw.add(line);
 			}
 		}
 
-		data = new SyntaxAnalyzerData(nonterminalSymbols, terminalSymbols, syncSymbols, grammarProductionRules);
-	}
-
-	private GrammarProductionRule createProduction(String currentStartSymbol, String line) {
-		List<Symbol> rule = new ArrayList<>();
-		for (String value : line.split(" ")) {
-			rule.add(value.startsWith("<") ? new NonterminalSymbol(value) : new TerminalSymbol(value));
-		}
-		return new GrammarProductionRule(currentStartSymbol, rule);
+		data = new SyntaxAnalyzerData(nonterminalSymbols, terminalSymbols, syncSymbols, grammarProductionsRaw);
 	}
 
 	public SyntaxAnalyzerData getData() {

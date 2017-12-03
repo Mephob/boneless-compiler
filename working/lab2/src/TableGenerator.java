@@ -1,7 +1,170 @@
+package lab2;
+
 import java.util.*;
 
 public class TableGenerator {
 
+	public static LRTable generateTable(DKA dka, List<String> nonterminalSymbols, List<String> terminalSymbols) {
+		List<DKA.DKAState> states = dka.getStates();
+		int numberOfStates = states.size();
+
+		//columns = terminal + 1(eof) + nontermianlkenser 
+		int columnCounter = 0;
+		Map<String, Integer> columns = new HashMap<>();
+
+		//fill the map with terminal symbols
+		for (String terminalSymbol : terminalSymbols) {
+			columns.put(terminalSymbol, columnCounter++);
+		}
+
+		//add the eof symbol to the table
+		columns.put("~", columnCounter++);
+
+		//fill the map with nonterminal symbols
+		for (String nonterminalSymbol : nonterminalSymbols) {
+			columns.put(nonterminalSymbol, columnCounter++);
+		}
+
+		//[retci][stupci]
+		String[][] matrix = new String[numberOfStates][columnCounter];
+
+		//populate the matrix
+		//gledamo DKA
+		//iteriramo sva stanja, i punimo matricu na mjesto koje odgovara onom za prijelaze
+		//iteriramo prijelaze
+		for (int i = 0; i < numberOfStates; i++) {
+			String[] lines = dka.getStates().get(i).text.split("\n");
+			Set<String> reducedBy = horseShoe(lines);
+			Set<String> movedFor = extremeIntegrating(lines);
+
+			int j = 0;
+			for (Map.Entry<String, DKA.DKAState> entry : dka.getStates().get(i).crossings.entrySet()) {
+				if (reducedBy.contains(entry.getKey())) {//reduction is applied
+					//find what reduction is applied
+					//case 3b
+
+					matrix[i][j] = nyahaha(lines, entry.getValue().id, entry.getKey());
+				} else if (terminalSymbols.contains(entry.getKey())) {
+					//case 3a
+					//enter new state
+					matrix[i][j] = new String("Pomakni " + entry.getValue().id);
+				} else if (nonterminalSymbols.contains(entry.getKey())) { //reduction was applied
+					//case 4a
+					//reduction was applied
+					matrix[i][columns.get(entry.getKey())] = new String("Stavi " + Integer.toString(entry.getValue().id));
+				}
+
+				j++;
+
+			}
+		}
+
+		/*stanje i sa prijelazom j, ako postoji prijelaz iz i u neko novo stanje,
+		 * na mjesto [i][mjesto nezavrsnog znaka] ide stavi ID
+		 * [i][mapa index] -> crossing.id
+		 */
+
+		LRTable table = new LRTable(columns, matrix);
+		return table;
+	}
+
+	private static String nyahaha(String[] lines, int id, String crossing) {
+		String matrixEntry = "Reduciraj ";
+		for (int i = 0; i < lines.length; i++) {
+			if (lines[i].startsWith("<S'>")) {
+				//skip
+			} else {
+
+				String right = lines[i].split("\\*")[1];
+				char[] rightChar = right.toCharArray();
+				if (rightChar[0] == ',') {//we found a potential reduction
+					String[] reducedByString = right.split("\\{")[1].split(",");
+					int lastIndex = reducedByString.length - 1;
+					int lastLength = reducedByString[lastIndex].length();
+					reducedByString[lastIndex].substring(0, lastLength - 2);
+
+					List<String> reducers = Arrays.asList(reducedByString);
+					if (reducers.contains(crossing)) {//this is the one
+						//parse the line again, lines[i]
+						String rightSide = lines[i].split("->")[1];
+						rightSide = rightSide.split("\\*")[0].trim();
+
+						if (rightSide.isEmpty()) {//eps production
+							matrixEntry += Integer.toString(0);
+							matrixEntry += " ";
+							matrixEntry += lines[i].split("->")[0].trim();
+						} else {//non eps production
+							String[] tokens = rightSide.split(" ");
+							matrixEntry += Integer.toString(tokens.length);
+							matrixEntry += " ";
+							matrixEntry += lines[i].split("->")[0].trim();
+						}
+
+
+					} else {
+						continue;
+					}
+
+				}
+
+			}
+		}
+
+		/*
+		 * Reduciraj 3 <A>
+		 */
+
+		return matrixEntry;
+	}
+
+	private static Set<String> extremeIntegrating(String[] lines) {
+		Set<String> movedFor = new TreeSet<>();
+		for (int i = 0; i < lines.length; i++) {
+			if (lines[i].startsWith("<S'>")) {
+				//skip
+			} else {
+
+				String right = lines[i].split("\\*")[1];
+				char[] rightChar = right.toCharArray();
+				if (rightChar[0] == ',') {
+					//skip
+					continue;
+				} else {
+					right = right.substring(1);
+					String movedForCandidate = right.split(" ")[0];
+					movedFor.add(movedForCandidate);
+				}
+
+			}
+		}
+
+		return movedFor;
+	}
+
+	private static Set<String> horseShoe(String[] lines) {
+		Set<String> reducedBy = new TreeSet<>();
+		for (int i = 0; i < lines.length; i++) {
+			if (lines[i].startsWith("<S'>")) {
+				//skip
+			} else {
+
+				String right = lines[i].split("\\*")[1];
+				char[] rightChar = right.toCharArray();
+				if (rightChar[2] == '{') {//has to be reduced
+					String[] reducedByString = right.split("\\{")[1].split(",");
+					int lastIndex = reducedByString.length - 1;
+					int lastLength = reducedByString[lastIndex].length();
+					reducedByString[lastIndex].substring(0, lastLength - 2);
+
+					for (int j = 0; j < reducedByString.length; j++) {
+						reducedBy.add(reducedByString[j]);
+					}
+				}
+			}
+		}
+
+		return reducedBy;
+	}
 
 	public TableGenerator() {
 
@@ -10,18 +173,19 @@ public class TableGenerator {
 
 	public static void main(String[] args) {
 		System.out.println(generateDKA(Arrays.asList(
-			  "<S>",
-			  " <A>",
-			  "<A>",
-			  " <B> <A>",
-			  " $",
-			  "<B>",
-			  " a <B>",
-			  " b")));
+				"<S>",
+				" <A>",
+				"<A>",
+				" <B> <A>",
+				" $",
+				"<B>",
+				" a <B>",
+				" b")));
+
 	}
 
 
-	private static DKA generateDKA(List<String> lines) {
+	public static DKA generateDKA(List<String> lines) {
 		ENKA enka = generateENKA(lines);
 
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
@@ -40,7 +204,7 @@ public class TableGenerator {
 		Set<ENKA.ENKAState> done = new HashSet<>();
 
 		//add all the states
-		while(!todo.isEmpty()) {
+		while (!todo.isEmpty()) {
 			Set<ENKA.ENKAState> epsSurrounding = new HashSet<>();
 			epsSurrounding.add(todo.get(0));
 
@@ -179,8 +343,8 @@ public class TableGenerator {
 						if (e.right.length == 1) {
 							continue;
 						}
-						if (e.right[i] == null && e.right[i+1].equals(enkaS.left)) {
-							beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[i+2])] = true;
+						if (e.right[i] == null && e.right[i + 1].equals(enkaS.left)) {
+							beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[i + 2])] = true;
 							break;
 						}
 					}
@@ -192,8 +356,6 @@ public class TableGenerator {
 
 		first.propagateFinishers(Arrays.asList("~"));
 		first.calcluateChildEpsFinishers(beginings, thingiesList);
-
-
 
 
 		ENKA.ENKAState buff = result.new ENKAState("<S'>", lines.get(0).split(" "));
@@ -210,7 +372,8 @@ public class TableGenerator {
 		boolean finish = false;
 
 		while (!finish) {
-			mainFor: for (int i = 0; i < field.length; i++) {
+			mainFor:
+			for (int i = 0; i < field.length; i++) {
 				if (!(elements.get(i).startsWith("<") && elements.get(i).endsWith(">"))) {
 					field[i][i] = true;
 				} else {
@@ -241,33 +404,9 @@ public class TableGenerator {
 		}
 	}
 
+	public static class DKA {
 
-
-
-	private static class DKA {
-
-		private int n = 0;
-		List<DKAState> states = new ArrayList<>();
-
-		private DKAState getForId(int id) {
-			return states.get(id-1);
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder bob = new StringBuilder();
-
-			for (DKAState dnkaS : states) {
-				bob.append(dnkaS.toString());
-				bob.append('\n');
-				bob.append("--------------------------------");
-				bob.append('\n');
-			}
-
-			return bob.toString();
-		}
-
-		private class DKAState {
+		public class DKAState {
 
 			private int id;
 			private String text;
@@ -315,8 +454,35 @@ public class TableGenerator {
 				return bob.toString();
 			}
 		}
-	}
 
+
+		private int n = 0;
+		List<DKAState> states = new ArrayList<>();
+
+
+		public List<DKAState> getStates() {
+			return states;
+		}
+
+		private DKAState getForId(int id) {
+			return states.get(id - 1);
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder bob = new StringBuilder();
+
+			for (DKAState dnkaS : states) {
+				bob.append(dnkaS.toString());
+				bob.append('\n');
+				bob.append("--------------------------------");
+				bob.append('\n');
+			}
+
+			return bob.toString();
+		}
+
+	}
 
 
 	private static class ENKA {
