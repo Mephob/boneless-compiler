@@ -186,7 +186,7 @@ public class TableGenerator {
 
 	public static DKA generateDKA(List<String> lines) {
 		ENKA enka = generateENKA(lines);
-
+		System.out.println(enka);
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
 
 		ENKA.ENKAState first = null;
@@ -364,7 +364,7 @@ public class TableGenerator {
 			}
 		});
 
-		buff.propagateFinishers(beginings, thingiesList, Arrays.asList("~"));
+		buff.propagateFinishers(beginings, thingiesList, Collections.singleton("~"));
 		//first.calcluateChildEpsFinishers(beginings, thingiesList);
 
 
@@ -520,8 +520,8 @@ public class TableGenerator {
 			private String[] right;
 			private Map<String, ENKAState> crossings = new HashMap<>();
 			private List<ENKAState> eCrossings = new ArrayList<>(4);
-			private List<String> finishers = new ArrayList<>(4);
-			private boolean epsCalculated = false;
+			private Set<String> finishers = new HashSet<>();
+			private int epsCalculated = 0;
 
 			public ENKAState(String left, String[] right) {
 				id = ++n;
@@ -543,14 +543,14 @@ public class TableGenerator {
 			}
 
 			private void calcluateChildEpsFinishers(boolean[][] beginings, List<String> thingiesList) {
-				if (epsCalculated) {
-					return;
-				}
-				epsCalculated = true;
+				//if (epsCalculated != eCrossings.size()) {
+				//	return;
+				//}
+				//epsCalculated = true;
 
 				//propagateFinishers(beginings, thingiesList, finishers);
 
-				List<String> buffFinishers = new ArrayList<>();
+				Set<String> buffFinishers = new HashSet<>();
 				if (indexOfDot() + 2 >= right.length) {
 					buffFinishers = finishers;
 				} else {
@@ -564,7 +564,7 @@ public class TableGenerator {
 					}
 
 					for (ENKAState e : states) {
-						if (finishers.contains("~") && e.left.equals(thingiesList.get(index))) {
+						if (e.left.equals(thingiesList.get(index))) {
 							if (e.right.length == 1) {
 								buffFinishers.add("~");
 							}
@@ -578,9 +578,14 @@ public class TableGenerator {
 				}
 			}
 
-			private void propagateFinishers(boolean[][] beginings, List<String> thingiesList, List<String> finishers) {
-				this.finishers = finishers;
+			private void propagateFinishers(boolean[][] beginings, List<String> thingiesList, Set<String> finishers) {
+				Set<String> buff = new HashSet<>(this.finishers);
+				this.finishers.addAll(finishers);
 				//epsCalculated = true;
+
+				if (buff.equals(this.finishers)) {
+					return;
+				}
 
 				for (String s : crossings.keySet()) {
 					crossings.get(s).propagateFinishers(beginings, thingiesList, finishers);
