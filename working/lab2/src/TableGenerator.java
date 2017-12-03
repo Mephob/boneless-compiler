@@ -1,3 +1,4 @@
+
 import java.util.*;
 
 
@@ -7,7 +8,7 @@ public class TableGenerator {
 		List<DKA.DKAState> states = dka.getStates();
 		int numberOfStates = states.size();
 
-		//columns = terminal + 1(eof) + nontermianlkenser 
+		//columns = terminal + 1(eof) + nontermianlkenser
 		int columnCounter = 0;
 		Map<String, Integer> columns = new HashMap<>();
 
@@ -23,6 +24,7 @@ public class TableGenerator {
 		for (String nonterminalSymbol : nonterminalSymbols) {
 			columns.put(nonterminalSymbol, columnCounter++);
 		}
+
 
 
 		//[retci][stupci]
@@ -46,8 +48,6 @@ public class TableGenerator {
 				if (reducedBy.contains(terminalSymbols.get(j))) {//reduction is applied
 					//find what reduction is applied
 					//case 3b
-					//System.out.println("im in");
-
 					matrix[i][j] = nyahaha(lines, terminalSymbols.get(j));
 				}
 			}
@@ -64,7 +64,6 @@ public class TableGenerator {
 				//System.out.println(dka.getStates().get(i).id + "        " + entry.getKey() + "->" + entry.getValue().id + "      " +  j);
 
 				//System.out.print("key = " + entry.getKey() + "\n");
-
 
 				//boolean reducedContain = reducedBy.contains(entry.getKey());
 				//System.out.println(reducedContain);
@@ -179,6 +178,7 @@ public class TableGenerator {
 			} else {
 
 				String right = lines[i].split("\\*")[1];
+
 				right = right.trim();
 				//right side parsed correctly
 				char[] rightChar = right.toCharArray();
@@ -201,8 +201,6 @@ public class TableGenerator {
 				}
 			}
 		}
-
-		//works properly
 
 		return reducedBy;
 	}

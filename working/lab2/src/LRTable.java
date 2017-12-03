@@ -1,8 +1,12 @@
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class LRTable {
-	private Map<String, Integer> columns;
+public class LRTable implements Serializable {
+
+	public static final long serialVersionUID = 42L;
+
+	public Map<String, Integer> columns;
     public String[][] neo;
 
     public LRTable(Map<String, Integer> columns, String[][] neo) {

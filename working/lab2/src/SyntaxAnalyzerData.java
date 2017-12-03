@@ -1,8 +1,9 @@
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class SyntaxAnalyzerData {
+public class SyntaxAnalyzerData implements Serializable {
 
 	private List<String> nonterminalSymbols;
 	private List<String> terminalSymbols;
