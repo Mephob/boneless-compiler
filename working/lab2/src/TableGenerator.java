@@ -351,9 +351,6 @@ public class TableGenerator {
 
 		findBeginings(beginings, thingiesList);
 
-		first.propagateFinishers(beginings, thingiesList, Arrays.asList("~"));
-		//first.calcluateChildEpsFinishers(beginings, thingiesList);
-
 
 		ENKA.ENKAState buff = result.new ENKAState("<S'>", new String[]{first.left});
 
@@ -366,6 +363,12 @@ public class TableGenerator {
 				buff.eCrossings.add(s);
 			}
 		});
+
+		buff.propagateFinishers(beginings, thingiesList, Arrays.asList("~"));
+		//first.calcluateChildEpsFinishers(beginings, thingiesList);
+
+
+
 
 		return result;
 	}
