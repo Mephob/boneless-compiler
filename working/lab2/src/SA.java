@@ -32,11 +32,12 @@ public class SA {
 		stack.push(new Pair(null, 0));
 		inputValues.add(new Input("~", -1, ""));
 		int currentIndex = 0;
-		while (currentIndex < inputValues.size() - 1) {
+		while (currentIndex < inputValues.size()) {
 			Input currentInput = inputValues.get(currentIndex);
 			String unifChar = currentInput.unformniZnak;
 			String action = table.findAction(stack.peek().value2, unifChar);
 			System.out.println(action);
+
 			if (action == null) {
 //				System.err.println("Greška: " + currentInput);
 			} else if(action.startsWith("Reduciraj")) {
@@ -46,6 +47,14 @@ public class SA {
 				}
 				int index = stack.peek().value2;
 				String putAction = table.findAction(index, values[2]);
+				if (unifChar.equals("~")
+						&& stack.get(0).equals(new Pair(null, 0))
+						&& values[2].equals(data.getNonterminalSymbols().get(0))
+						&& putAction == null
+						) {
+					System.out.println("Prihvaća");
+					break;
+				}
 				stack.push(new Pair(values[2], Integer.parseInt(putAction.split(" ")[1])));
 			} else if (action.startsWith("Pomakni")) {
 				stack.push(new Pair(unifChar, Integer.parseInt(action.split(" ")[1])));
@@ -84,6 +93,21 @@ public class SA {
 		@Override
 		public String toString() {
 			return "("+value1+","+value2+")";
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Pair pair = (Pair) o;
+			return Objects.equals(value1, pair.value1) &&
+					Objects.equals(value2, pair.value2);
+		}
+
+		@Override
+		public int hashCode() {
+
+			return Objects.hash(value1, value2);
 		}
 	}
 
