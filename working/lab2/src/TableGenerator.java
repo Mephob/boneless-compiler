@@ -1,5 +1,7 @@
+package lab2;
 
 import java.util.*;
+
 
 public class TableGenerator {
 
@@ -23,6 +25,7 @@ public class TableGenerator {
 		for (String nonterminalSymbol : nonterminalSymbols) {
 			columns.put(nonterminalSymbol, columnCounter++);
 		}
+		
 
 		//[retci][stupci]
 		String[][] matrix = new String[numberOfStates][columnCounter];
@@ -32,25 +35,53 @@ public class TableGenerator {
 		//iteriramo sva stanja, i punimo matricu na mjesto koje odgovara onom za prijelaze
 		//iteriramo prijelaze
 		for (int i = 0; i < numberOfStates; i++) {
+			//System.err.println(dka.getStates().get(i).text);
+			
 			String[] lines = dka.getStates().get(i).text.split("\n");
+			
 			Set<String> reducedBy = horseShoe(lines);
 			Set<String> movedFor = extremeIntegrating(lines);
-
-			int j = 0;
-			for (Map.Entry<String, DKA.DKAState> entry : dka.getStates().get(i).crossings.entrySet()) {
-				if (reducedBy.contains(entry.getKey())) {//reduction is applied
+			
+			//reducedBy works properly
+			
+			for (int j = 0; j < terminalSymbols.size(); j++) {
+				if (reducedBy.contains(terminalSymbols.get(j))) {//reduction is applied
 					//find what reduction is applied
 					//case 3b
+					//System.out.println("im in");
+					
+					matrix[i][j] = nyahaha(lines, terminalSymbols.get(j));
+				}
+			}
+			if (reducedBy.contains("~")) {//reduction is applied
+				//find what reduction is applied
+				//case 3b
+				//System.out.println("im in");
+				
+				matrix[i][terminalSymbols.size()] = nyahaha(lines, "~");
+			}
+			
+			int j = 0;
+			for (Map.Entry<String, DKA.DKAState> entry : dka.getStates().get(i).crossings.entrySet()) {
+				//System.out.println(dka.getStates().get(i).id + "        " + entry.getKey() + "->" + entry.getValue().id + "      " +  j);
 
-					matrix[i][j] = nyahaha(lines, entry.getValue().id, entry.getKey());
-				} else if (terminalSymbols.contains(entry.getKey())) {
+				//System.out.print("key = " + entry.getKey() + "\n");
+
+
+				//boolean reducedContain = reducedBy.contains(entry.getKey());
+				//System.out.println(reducedContain);
+
+				//System.out.println(entry.getKey());
+
+				if (terminalSymbols.contains(entry.getKey())) {
 					//case 3a
 					//enter new state
-					matrix[i][j] = new String("Pomakni " + entry.getValue().id);
+					int place = terminalSymbols.indexOf(entry.getKey());
+					matrix[i][place] = new String("Pomakni " + (entry.getValue().id - 1));
 				} else if (nonterminalSymbols.contains(entry.getKey())) { //reduction was applied
 					//case 4a
 					//reduction was applied
-					matrix[i][columns.get(entry.getKey())] = new String("Stavi " + Integer.toString(entry.getValue().id));
+					matrix[i][columns.get(entry.getKey())] = new String("Stavi " + (Integer.toString(entry.getValue().id - 1)));
 				}
 
 				j++;
@@ -67,7 +98,8 @@ public class TableGenerator {
 		return table;
 	}
 
-	private static String nyahaha(String[] lines, int id, String crossing) {
+	private static String nyahaha(String[] lines, String terminalSymbol) {
+	
 		String matrixEntry = "Reduciraj ";
 		for (int i = 0; i < lines.length; i++) {
 			if (lines[i].startsWith("<S'>")) {
@@ -77,13 +109,14 @@ public class TableGenerator {
 				String right = lines[i].split("\\*")[1];
 				char[] rightChar = right.toCharArray();
 				if (rightChar[0] == ',') {//we found a potential reduction
-					String[] reducedByString = right.split("\\{")[1].split(",");
+					String[] reducedByString = right.split("\\{")[1].trim().split(",");
 					int lastIndex = reducedByString.length - 1;
 					int lastLength = reducedByString[lastIndex].length();
-					reducedByString[lastIndex].substring(0, lastLength - 2);
-
+					reducedByString[lastIndex] = reducedByString[lastIndex].substring(0, lastLength - 2);
+					
 					List<String> reducers = Arrays.asList(reducedByString);
-					if (reducers.contains(crossing)) {//this is the one
+					if (reducers.contains(terminalSymbol)) {//this is the one
+						
 						//parse the line again, lines[i]
 						String rightSide = lines[i].split("->")[1];
 						rightSide = rightSide.split("\\*")[0].trim();
@@ -147,21 +180,32 @@ public class TableGenerator {
 				//skip
 			} else {
 
-				String right = lines[i].split("\\*")[1];
+				String right = lines[i].split("\\*")[1]; 
+				right = right.trim();
+				//right side parsed correctly
 				char[] rightChar = right.toCharArray();
 				if (rightChar[2] == '{') {//has to be reduced
-					String[] reducedByString = right.split("\\{")[1].split(",");
-					int lastIndex = reducedByString.length - 1;
-					int lastLength = reducedByString[lastIndex].length();
-					reducedByString[lastIndex].substring(0, lastLength - 2);
-
+					String[] reducedByString = right.split("\\{")[1].trim().split(",");
+					 
+					//reducedByString works properly
+					if(reducedByString.length > 0){
+						int lastIndex = reducedByString.length - 1;
+						int lastLength = reducedByString[lastIndex].length();
+						//System.out.println(reducedByString[lastIndex]);
+						reducedByString[lastIndex] = reducedByString[lastIndex].substring(0, lastLength - 2);
+					}
+					
 					for (int j = 0; j < reducedByString.length; j++) {
+						//System.out.println(reducedByString[j]);
 						reducedBy.add(reducedByString[j]);
+						//this works
 					}
 				}
 			}
 		}
-
+		
+		//works properly
+		
 		return reducedBy;
 	}
 
