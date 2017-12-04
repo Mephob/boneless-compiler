@@ -6,7 +6,7 @@ import java.util.*;
 
 public class SA {
 
-	static Stack<Pair> stack = new Stack<>();
+	static Stack<Triplet> stack = new Stack<>();
 
 	public static void main(String[] args) throws URISyntaxException, IOException, ClassNotFoundException {
 		Path filePath = Paths.get(GSA.class.getClassLoader().getResource(args[0]).toURI());
@@ -27,41 +27,171 @@ public class SA {
 
 	private static void executeLR(List<Input> inputValues, LRTable table, SyntaxAnalyzerData data) {
 
-		stack.push(new Pair(null, 0));
+		stack.push(new Triplet(null, 0, null));
 		inputValues.add(new Input("~", -1, ""));
 		int currentIndex = 0;
+		//dodaj ovog decka
+		Triplet biggeBuoy = new Triplet(null, 0, null);//roditelj svih deckica
+
 		while (currentIndex < inputValues.size()) {
 			Input currentInput = inputValues.get(currentIndex);
 			String token = currentInput.token;
-			String action = table.findAction(stack.peek().value2, token);
+			String action = table.findAction(stack.peek().value, token);
 
-			System.out.println(token + " " + action);
-			System.out.println(stack);
+			//System.err.println("Citam: " + token + " " + action);
+			//System.err.println(stack);
+
 			if (action == null) {
-				System.out.println("Kurcina");
-				break;
+				recoveryMessage(stack.peek().value, currentInput.actualText, table, data.getTerminalSymbols());
+				int shift = recoveryProcedure(currentIndex, inputValues, table, data.getSyncSymbols());
+				currentIndex += shift;
+				continue;
+
 			} else if(action.startsWith("Reduciraj")) {
+				List<Triplet> bois = new ArrayList<>();
 				String[] values = action.split(" ");
+
 				for (int i = 0; i < Integer.parseInt(values[1]); i++) {
-					stack.pop();
+					bois.add(stack.pop());
 				}
 
-				int index = stack.peek().value2;
+				int index = stack.peek().value;
 				String putAction = table.findAction(index, values[2]);
 				if (putAction == null && token.equals("~")
-						&& stack.get(0).equals(new Pair(null, 0))
+						&& stack.get(0).equals(new Triplet(null, 0, new ArrayList<>()))
 						) {
-					System.out.println("Prihvaca");
+					//System.err.println("Prihvaca");
+					String name = values[2];
+					biggeBuoy = new Triplet(name, 0, bois);
+
 					break;
 				}
-				System.out.println(putAction);
-				stack.push(new Pair(values[2], Integer.parseInt(putAction.split(" ")[1])));
+				//System.err.println(putAction);
+				stack.push(new Triplet(values[2], Integer.parseInt(putAction.split(" ")[1]), bois));
+
+				//bila je epsilon redukcija
+				if (Integer.parseInt(values[1]) == 0) {
+					bois.add(new Triplet("$", 0, new ArrayList<>()));
+					stack.peek().children = bois;
+				}
+
 			} else if (action.startsWith("Pomakni")) {
-				stack.push(new Pair(token, Integer.parseInt(action.split(" ")[1])));
+				stack.push(new Triplet(currentInput.toString(), Integer.parseInt(action.split(" ")[1]), new ArrayList<>()));
 				currentIndex++;
 			}
 		}
-		System.out.println(stack);
+		//System.err.println(stack);
+		printTree(biggeBuoy, 0);
+	}
+
+	/*
+	Prima trenutno stanje, niz koji je izazvao pogresku, tablica i svi zavrsni znakovi.
+	Ispisuje poruku o pogreski.
+	 */
+	private static void recoveryMessage(int currentState, String actualText, LRTable table, List<String> terminals) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Pogreska se dogodila u retku: ").append(currentState).append("\n")
+				.append("Procitan je niz: ").append(actualText).append("\n").append("\n")
+				.append("Mozda ste mislili na nesto od ovoga:");
+
+		//trazi sve zavrsne za koje postoji neka akcija, tj za koje ne bi doslo do pogreske
+		for (String terminal : terminals) {
+			if (table.findAction(currentState, terminal) != null) {
+				sb.append(" ").append(terminal);
+			}
+		}
+		System.err.println(sb.toString());
+	}
+
+	private static int recoveryProcedure(int index, List<Input> imp, LRTable table, List<String> synchros) {
+		int counter = 0;
+		int tempIndex = index;
+		String znak;
+
+		//faza 1 - trazimo prvi sljedeci sinkronizacijski
+		do {
+			znak = imp.get(tempIndex).token;
+			if (synchros.contains(znak)) {
+				break;
+			}
+			tempIndex++;
+			counter++;
+		} while (tempIndex < imp.size());
+
+		//faza 2 - odbacujemo stack entryje dok ne naletimo na stanje u kojem postoji neka normalna akcija
+		do {
+			stack.pop();
+			if (table.findAction(tempIndex, znak) != null) {
+				break;
+			}
+		} while (stack.isEmpty() == false);
+
+		//za koliko smo se pomakli u indeksu
+		return counter;
+	}
+
+	/*
+	Rekurzivno ispisuje stablo inorder, pravi se da je lista stablo marijone
+	 */
+	public static void printTree(Triplet boi, int depth) {
+		//dosta rekurzije ako sam dosao do lista
+		if (boi.children.isEmpty()) {
+			String rez = buildString(boi, depth);
+			System.out.println(rez);
+			return;
+		}
+
+		//jos uvijek nije list
+		System.out.println(buildString(boi, depth));
+
+		List<Triplet> temp = new ArrayList<>(boi.children);
+		Collections.reverse(temp);
+		for (Triplet child : temp) {
+			printTree(child, depth + 1);
+		}
+	}
+
+	private static String buildString(Triplet boi, int depth) {
+		StringBuilder sb = new StringBuilder();
+
+		for (int i = 0; i < depth; i++) {
+			//todo: prebaci crticu u space invaders
+			sb.append("-");
+		}
+		sb.append(boi.name);
+
+		return sb.toString();
+	}
+
+	public static class Triplet {
+		public String name;
+		public Integer value;
+		public List<Triplet> children;
+
+		public Triplet(String name, Integer value, List<Triplet> children) {
+			this.name = name;
+			this.value = value;
+			this.children = children;
+		}
+
+		@Override
+		public String toString()  {
+			return "(" + name + "," + value + ")";
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Triplet triplet = (Triplet) o;
+			return Objects.equals(name, triplet.name) &&
+					Objects.equals(value, triplet.value);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(name, value);
+		}
 	}
 
 	public static class Input {
@@ -78,36 +208,6 @@ public class SA {
 		@Override
 		public String toString() {
 			return token + " " + lineNumber + " " + actualText;
-		}
-	}
-
-	public static class Pair {
-		public String value1;
-		public Integer value2;
-
-		public Pair(String value1, Integer value2) {
-			this.value1 = value1;
-			this.value2 = value2;
-		}
-
-		@Override
-		public String toString() {
-			return "("+value1+","+value2+")";
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			Pair pair = (Pair) o;
-			return Objects.equals(value1, pair.value1) &&
-					Objects.equals(value2, pair.value2);
-		}
-
-		@Override
-		public int hashCode() {
-
-			return Objects.hash(value1, value2);
 		}
 	}
 
