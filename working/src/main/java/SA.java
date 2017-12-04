@@ -38,11 +38,15 @@ public class SA {
 			String token = currentInput.token;
 			String action = table.findAction(stack.peek().value, token);
 
-			System.err.println("Citam: " + token + " " + action);
-			System.err.println(stack);
+			//System.err.println("Citam: " + token + " " + action);
+			//System.err.println(stack);
+
 			if (action == null) {
-				System.out.println("Kurcina");
-				break;
+				recoveryMessage(stack.peek().value, currentInput.actualText, table, data.getTerminalSymbols());
+				int shift = recoveryProcedure(currentIndex, inputValues, table, data.getSyncSymbols());
+				currentIndex += shift;
+				continue;
+
 			} else if(action.startsWith("Reduciraj")) {
 				List<Triplet> bois = new ArrayList<>();
 				String[] values = action.split(" ");
@@ -56,13 +60,13 @@ public class SA {
 				if (putAction == null && token.equals("~")
 						&& stack.get(0).equals(new Triplet(null, 0, new ArrayList<>()))
 						) {
-					System.err.println("Prihvaca");
+					//System.err.println("Prihvaca");
 					String name = values[2];
 					biggeBuoy = new Triplet(name, 0, bois);
 
 					break;
 				}
-				System.err.println(putAction);
+				//System.err.println(putAction);
 				stack.push(new Triplet(values[2], Integer.parseInt(putAction.split(" ")[1]), bois));
 
 				//bila je epsilon redukcija
@@ -76,8 +80,54 @@ public class SA {
 				currentIndex++;
 			}
 		}
-		System.err.println(stack);
+		//System.err.println(stack);
 		printTree(biggeBuoy, 0);
+	}
+
+	/*
+	Prima trenutno stanje, niz koji je izazvao pogresku, tablica i svi zavrsni znakovi.
+	Ispisuje poruku o pogreski.
+	 */
+	private static void recoveryMessage(int currentState, String actualText, LRTable table, List<String> terminals) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Pogreska se dogodila u retku: ").append(currentState).append("\n")
+				.append("Procitan je niz: ").append(actualText).append("\n").append("\n")
+				.append("Mozda ste mislili na nesto od ovoga:");
+
+		//trazi sve zavrsne za koje postoji neka akcija, tj za koje ne bi doslo do pogreske
+		for (String terminal : terminals) {
+			if (table.findAction(currentState, terminal) != null) {
+				sb.append(" ").append(terminal);
+			}
+		}
+		System.err.println(sb.toString());
+	}
+
+	private static int recoveryProcedure(int index, List<Input> imp, LRTable table, List<String> synchros) {
+		int counter = 0;
+		int tempIndex = index;
+		String znak;
+
+		//faza 1 - trazimo prvi sljedeci sinkronizacijski
+		do {
+			znak = imp.get(tempIndex).token;
+			if (synchros.contains(znak)) {
+				break;
+			}
+			tempIndex++;
+			counter++;
+		} while (tempIndex < imp.size());
+
+		//faza 2 - odbacujemo stack entryje dok ne naletimo na stanje u kojem postoji neka normalna akcija
+		do {
+			stack.pop();
+			if (table.findAction(tempIndex, znak) != null) {
+				break;
+			}
+		} while (stack.isEmpty() == false);
+
+		//za koliko smo se pomakli u indeksu
+		return counter;
 	}
 
 	/*
