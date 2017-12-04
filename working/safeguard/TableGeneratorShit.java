@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Paths;
@@ -37,7 +38,7 @@ public class TableGenerator {
 		//iteriramo sva stanja, i punimo matricu na mjesto koje odgovara onom za prijelaze
 		//iteriramo prijelaze
 		for (int i = 0; i < numberOfStates; i++) {
-			System.err.println(dka.getStates().get(i).text);
+			//System.err.println(dka.getStates().get(i).text);
 
 			String[] lines = dka.getStates().get(i).text.split("\n");
 
@@ -63,7 +64,7 @@ public class TableGenerator {
 
 			int j = 0;
 			for (Map.Entry<String, DKA.DKAState> entry : dka.getStates().get(i).crossings.entrySet()) {
-				System.err.println(dka.getStates().get(i).id + "        " + entry.getKey() + "->" + entry.getValue().id + "      " +  j);
+				//System.out.println(dka.getStates().get(i).id + "        " + entry.getKey() + "->" + entry.getValue().id + "      " +  j);
 
 				//System.out.print("key = " + entry.getKey() + "\n");
 
@@ -76,11 +77,11 @@ public class TableGenerator {
 					//case 3a
 					//enter new state
 					int place = terminalSymbols.indexOf(entry.getKey());
-					matrix[i][place] = "Pomakni " + (entry.getValue().id - 1);
+					matrix[i][place] = new String("Pomakni " + (entry.getValue().id - 1));
 				} else if (nonterminalSymbols.contains(entry.getKey())) { //reduction was applied
 					//case 4a
 					//reduction was applied
-					matrix[i][columns.get(entry.getKey())] = "Stavi " + (Integer.toString(entry.getValue().id - 1));
+					matrix[i][columns.get(entry.getKey())] = new String("Stavi " + (Integer.toString(entry.getValue().id - 1)));
 				}
 
 				j++;
@@ -211,17 +212,16 @@ public class TableGenerator {
 
 	}
 
-	//###################################################################################################################################
+
 	public static void main(String[] args) throws IOException {
-		//minusLang
-		System.out.println(generateDKA(new InputFileParser(Paths.get("main/resources/minusLang.san")).getData()));
+		System.out.println(generateENKA(new InputFileParser(Paths.get("filesNshit/langdefs/minusLang.san")).getData()));
 
 	}
 
 
 	public static DKA generateDKA(SyntaxAnalyzerData data) {
 		ENKA enka = generateENKA(data);
-		System.err.println(enka.n);
+		//System.out.println(enka);
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
 
 		ENKA.ENKAState first = null;
@@ -297,7 +297,8 @@ public class TableGenerator {
 			});
 		});
 
-		System.err.println(result.n);
+		//System.out.println("-vnr4evbejvbbfvjsjbek");
+		//System.out.println(result);
 		return result;
 	}
 
@@ -306,58 +307,121 @@ public class TableGenerator {
 		ENKA result = new ENKA();
 
 		//{a, b, c} and stuff
+
 		List<String> thingiesList = new ArrayList<>();
-		data.getNonterminalSymbols().forEach(s -> thingiesList.add(s.getValue()));
-		data.getTerminalSymbols().forEach(t -> thingiesList.add(t.getValue()));
+		thingiesList.addAll(data.getNonterminalSymbols());
+		thingiesList.addAll(data.getTerminalSymbols());
 
 		boolean[][] beginings = new boolean[thingiesList.size()][thingiesList.size()];
-		for (ProductionRule p : data.getGrammarProductions()) {
-			if (p.getRightSide().size() == 1 && p.getRightSide().get(0).getValue().equals("$")) {
+		for (ENKA.ENKAState enkaS : result.states) {
+			if (enkaS.right[0] != null) {
+				beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[0])] = true;
+			} else if (enkaS.right.length == 1) {
+				for (ENKA.ENKAState e : result.states) {
+					for (int i = 0; i < e.right.length - 2; i++) {
+						if (e.right.length == 1) {
+							continue;
+						}
+						if (e.right[i] == null && e.right[i + 1].equals(enkaS.left)) {
+							beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[i + 2])] = true;
+							break;
+						}
+					}
+				}
+			}
+		}
 
-				Symbol buff = new NonterminalSymbol(p.getLeftSide());
-				//for (int i = 0; i < beginings.length; i++) {
-					for (ProductionRule subP : data.getGrammarProductions()) {
-						List<Symbol> rightSide = subP.getRightSide();
+		findBeginings(beginings, thingiesList);
 
-						int index = rightSide.indexOf(buff);
-						if (index == -1) {
+		ENKA.ENKAState buff = result.new ENKAState("<S'>", new String[]{"*", data.getNonterminalSymbols().get(0)});
+		ENKA.ENKAState after = result.new ENKAState("<S'>", new String[]{data.getNonterminalSymbols().get(0), "*"});
+		buff.crossings.put(data.getNonterminalSymbols().get(0), after);
+
+		//podrazumijeva se da je prvo stanje prvo stanji i prijelaz u tekstualnoj datoteci
+		//buff.eCrossings = Arrays.asList(first);
+		//ENKA.ENKAState firstForAutistLambda = data.getNonterminalSymbols().get(0);
+		//System.out.println(first.left);
+		//result.states.forEach(s -> {
+		//	if (s.left.equals(firstForAutistLambda.left) && s.indexOfDot() == 0) {
+		//		buff.eCrossings.add(s);
+		//	}
+		//});
+
+		//buff.propagateFinishers(beginings, thingiesList, Collections.singleton("~"));
+		/*ENKA.ENKAState first = null;
+
+
+		String ref = null;
+		boolean firstDone = false;
+		for (int i = 0, n = lines.size(); i < n; i++) {
+			if (!lines.get(i).startsWith(" ")) {
+				ref = lines.get(i);
+				thingies.add(ref);
+			} else if (lines.get(i).substring(1).equals("$")) {
+				result.new ENKAState(ref, new String[]{null});
+				thingies.add(ref);
+			} else {
+				String[] elements = lines.get(i).substring(1).split(" ");
+				thingies.addAll(Arrays.asList(elements));
+				ENKA.ENKAState previous = null;
+
+				for (int j = 0; j <= elements.length; j++) {
+					String[] right = new String[elements.length + 1];
+
+					for (int l = 0, inserted = 0; l <= elements.length; l++) {
+						if (l == j) {
+							right[l] = null;
+							inserted++;
 							continue;
 						}
 
-						int k = 0;
-						for (; k < index; k++) {
-							if (!hasEpsProd(rightSide.get(k).getValue(), data)) {
-								break;
-							}
-						}
-
-						if (k == index) { //svi znakovi ipred imaju epsilon
-							beginings[thingiesList.indexOf(subP.getLeftSide())]
-								  [thingiesList.indexOf(rightSide.get(index+1).getValue())] = true;
-						}
+						right[l] = elements[l - inserted];
 					}
-				//}
+
+					ENKA.ENKAState current = result.new ENKAState(ref, right);
+					if (previous != null) {
+						previous.crossings.put(elements[j - 1], current);
+					}
+
+					previous = current;
+
+					if (!firstDone && current.left.equals(firstString)) {
+						first = current;
+						firstDone = true;
+					}
+				}
+			}
+		}
+
+		//add eps crossings
+		for (ENKA.ENKAState e : result.states) {
+			int i = e.indexOfDot();
+
+			if (i >= e.right.length - 1) {
 				continue;
 			}
 
-			beginings[thingiesList.indexOf(p.getLeftSide())][thingiesList.indexOf(p.getRightSide().get(0).getValue())] = true;
-		}
+			for (ENKA.ENKAState f : result.states) {
+				if (f.indexOfDot() == 0 && f.left.equals(e.right[i + 1])) {
+					e.eCrossings.add(f);
+				}
+			}
+		}*/
 
-		Map<String, Set<String>> mapOfBeginings = findBeginings(beginings, thingiesList);
 
-		ENKA.ENKAState buff = result.new ENKAState("<S'>", new String[]{null, data.getNonterminalSymbols().get(0).getValue()});
-		buff.finishers.add("~");
-		//ENKA.ENKAState after = result.new ENKAState("<S'>", new String[]{data.getNonterminalSymbols().get(0).getValue(), "*"});
-		//buff.crossings.put(data.getNonterminalSymbols().get(0).getValue(), after);
 
-//----------------------------------------------------------------------------------------------------------------------
-		buff.findYourCrossings(data, mapOfBeginings);
-		//System.err.println(result.n);
+
+
+
+		//first.calcluateChildEpsFinishers(beginings, thingiesList);
+
+
+		System.err.println(result.n);	//---------------------------------------------------------------
 		return result;
 	}
 
 
-	private static Map<String, Set<String>> findBeginings(boolean[][] field, List<String> elements) {
+	private static void findBeginings(boolean[][] field, List<String> elements) {
 		boolean[] done = new boolean[field.length];
 		boolean finish = false;
 
@@ -395,34 +459,6 @@ public class TableGenerator {
 				finish &= b;
 			}
 		}
-
-		Map<String, Set<String>> result = new HashMap<>();
-		for (int i = 0; i < field.length; i++ ) {
-			HashSet<String> beginers = new HashSet<>();
-			for (int j = 0; j < field.length; j++) {
-				if (field[i][j]
-					  && !elements.get(j).startsWith("<") && !elements.get(j).startsWith(">")) {
-					beginers.add(elements.get(j));
-				}
-			}
-
-			result.put(elements.get(i), beginers);
-		}
-
-		return result;
-	}
-
-
-	private static boolean hasEpsProd(String symbol, SyntaxAnalyzerData data) {
-		for (ProductionRule p : data.getGrammarProductions()) {
-			if (p.getLeftSide().equals(symbol)
-				  && p.getRightSide().size() == 1
-				  && p.getRightSide().get(0).value.equals("$")) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	public static class DKA {
@@ -511,18 +547,6 @@ public class TableGenerator {
 		private int n;
 		List<ENKAState> states = new ArrayList<>();
 
-		private ENKAState get(String left, String[] right, Set<String> finishers) {
-			for (ENKAState e : states) {
-				if (e.left.equals(left)
-					  && Arrays.equals(e.right, right)
-					  && e.finishers.equals(finishers)) {
-					return e;
-				}
-			}
-
-			return null;
-		}
-
 		@Override
 		public String toString() {
 			StringBuilder bob = new StringBuilder();
@@ -544,6 +568,7 @@ public class TableGenerator {
 			private Map<String, ENKAState> crossings = new HashMap<>();
 			private List<ENKAState> eCrossings = new ArrayList<>(4);
 			private Set<String> finishers = new HashSet<>();
+			private int epsCalculated = 0;
 
 			public ENKAState(String left, String[] right) {
 				id = ++n;
@@ -554,15 +579,128 @@ public class TableGenerator {
 
 
 			private int indexOfDot() {
-				for (int i = 0; i < right.length; i++) {
+				int i = 0;
+				for (; i < right.length; i++) {
 					if (right[i] == null) {
-						return i;
+						break;
 					}
 				}
 
-				throw new RuntimeException("There aint no dot in:" + toString());
+				return i;
 			}
 
+			private void calcluateChildEpsFinishers(boolean[][] beginings, List<String> thingiesList) {
+				//if (epsCalculated != eCrossings.size()) {
+				//	return;
+				//}
+				//epsCalculated = true;
+
+				//propagateFinishers(beginings, thingiesList, finishers);
+
+				Set<String> buffFinishers = new HashSet<>();
+				if (indexOfDot() + 2 >= right.length) {
+					buffFinishers = finishers;
+				} else {
+					int index = thingiesList.indexOf(right[indexOfDot() + 2]);
+
+					for (int i = 0; i < beginings.length; i++) {
+						String buff = thingiesList.get(i);
+						if (beginings[index][i] && !(buff.startsWith("<") && buff.endsWith(">"))) {
+							buffFinishers.add(buff);
+						}
+					}
+
+					for (ENKAState e : states) {
+						if (e.left.equals(thingiesList.get(index))) {
+							if (e.right.length == 1) {
+								buffFinishers.add("~");
+							}
+						}
+					}
+				}
+
+				for (ENKAState e : eCrossings) {
+					//e.finishers = buffFinishers;
+					e.propagateFinishers(beginings, thingiesList, buffFinishers);
+				}
+			}
+
+			private void propagateFinishers(boolean[][] beginings, List<String> thingiesList, Set<String> finishers) {
+				//Set<String> buff = new HashSet<>(this.finishers);
+				if (!this.finishers.isEmpty()) {
+					if (indexOfDot() != 0) {
+						return;
+					}
+					for (ENKAState e : ENKA.this.states) {
+						//System.err.println(e.left +  ":" + this.left + "=" +e.left.equals(this.left));
+						//System.err.println(Arrays.toString(e.right) + ":" + Arrays.toString(this.right) + "=" + Arrays.equals(e.right, this.right));
+						//System.err.println(e.finishers + ":" + finishers + e.finishers.equals(finishers));
+						//System.err.println();
+						if (e.left.equals(this.left) && Arrays.equals(e.right, this.right) && e.finishers.equals(finishers)) {
+							//System.err.println(e.mainString() + e.finishers + " is already here for:" + this.mainString() + e.finishers);
+							//System.err.println("------------------------------");
+							return;
+						}
+					}
+
+					//System.err.println("making new for: " + this.mainString() + this.finishers + ".for finishers: " + finishers);
+					//System.err.println("------------------------------");
+
+					List<ENKAState> newStates = new ArrayList<>();
+					//for (int i = this.indexOfDot(), n = this.indexOfDot(); i < this.right.length; i++) {
+					//	ENKAState newEnkaStateWithDifferentEnd = ENKA.this.new ENKAState(this.left, this.right);
+					//	if (prev != null) {
+					//		newEnkaStateWithDifferentEnd.crossings.put();
+					//		prev = newEnkaStateWithDifferentEnd;
+					//	}
+					//}
+					//povezi liniju
+					for (int i = 0; i<newStates.size(); i++) {
+						ENKAState buff = newStates.get(i);
+						buff.crossings.put(buff.right[buff.indexOfDot()+1], newStates.get(i+1));
+					}
+
+					//todo for petlja za generirati sve podnizove, i provijeriti da li treba podniz
+					//ENKAState newEnkaStateWithDifferentEnd = ENKA.this.new ENKAState(this.left, this.right);
+					//newEnkaStateWithDifferentEnd.finishers = finishers;
+
+
+					//todo for petlja za eps prijelaze
+					/*for (ENKAState e : ENKA.this.states) {
+						if (e.right[e.indexOfDot()+1].equals(newEnkaStateWithDifferentEnd.left)
+							  //&& newEnkaStateWithDifferentEnd.indexOfDot() == 0
+							  && e.finishers.equals(newEnkaStateWithDifferentEnd.finishers)) {
+							//epscrosisngs:e.crossings.put(newEnkaStateWithDifferentEnd.left, newEnkaStateWithDifferentEnd);
+							e.eCrossings.add(newEnkaStateWithDifferentEnd);
+						}
+
+						if (newEnkaStateWithDifferentEnd.right[e.indexOfDot()+1].equals(e.left)
+							  && e.finishers.equals(newEnkaStateWithDifferentEnd.finishers)) {
+							//e.crossings.put(newEnkaStateWithDifferentEnd.left, newEnkaStateWithDifferentEnd);
+
+						}
+					}*/
+/*
+					for (String s : newEnkaStateWithDifferentEnd.crossings.keySet()) {
+						newEnkaStateWithDifferentEnd.crossings.get(s).propagateFinishers(beginings, thingiesList, finishers);
+					}
+					newEnkaStateWithDifferentEnd.calcluateChildEpsFinishers(beginings, thingiesList);*/
+					return;
+				}
+
+				this.finishers = finishers;
+				//epsCalculated = true;
+
+				//if (buff.equals(this.finishers)) {
+				//	return;
+				//}
+
+				for (String s : crossings.keySet()) {
+					crossings.get(s).propagateFinishers(beginings, thingiesList, finishers);
+				}
+
+				calcluateChildEpsFinishers(beginings, thingiesList);
+			}
 
 			@Override
 			public boolean equals(Object o) {
@@ -592,14 +730,7 @@ public class TableGenerator {
 					bob.append(s);
 					bob.append("->");
 
-					bob.append("(" + crossings.get(s).mainString());
-					bob.append(", { ");
-					for (String splj : finishers) {
-						bob.append(splj + ",");
-					}
-					bob.deleteCharAt(bob.length() - 1);
-					bob.append(" }");
-					bob.append(')');
+					bob.append("(" + crossings.get(s).mainString() + ")");
 				}
 
 				bob.append('\n');
@@ -608,14 +739,7 @@ public class TableGenerator {
 				bob.append('$');
 				bob.append("->");
 				for (ENKAState s : eCrossings) {
-					bob.append("(" + s.mainString());
-					bob.append(", { ");
-					for (String splj : s.finishers) {
-						bob.append(splj + ",");
-					}
-					bob.deleteCharAt(bob.length() - 1);
-					bob.append(" }");
-					bob.append(")");
+					bob.append("(" + s.mainString() + ")");
 					bob.append(", ");
 				}
 				if (bob.charAt(bob.length() - 1) != '>') {
@@ -649,72 +773,6 @@ public class TableGenerator {
 				bob.deleteCharAt(bob.length() - 1);
 
 				return bob.toString();
-			}
-
-			private void findYourCrossings(SyntaxAnalyzerData data, Map<String, Set<String>> mapOfBeginings) {
-				if (indexOfDot() >= right.length-1) {
-					return;
-				}
-
-				//moving * one place back and generetingIfAbsent state
-				String[] followerRight = Arrays.copyOf(right, right.length);
-				followerRight[indexOfDot()] = followerRight[indexOfDot()+1];
-				followerRight[indexOfDot()+1] = null;
-				ENKAState follower = get(left, followerRight, finishers);
-
-				if (follower == null) {
-					follower = new ENKAState(left, followerRight);
-					follower.finishers = finishers;
-					System.err.println(toString() + "created:" + follower.toString());
-					follower.findYourCrossings(data, mapOfBeginings);
-				}
-
-				crossings.put(follower.right[indexOfDot()], follower);
-
-
-				//generetingIfAbsent states that this state will eps cross to
-				Set<String> childFinishers;
-				if (indexOfDot()+2 >= right.length) {
-					childFinishers = finishers;
-				} else {
-					int index = indexOfDot()+2;
-					String symbol = right[index];
-					childFinishers = new HashSet<>(mapOfBeginings.get(symbol));
-
-					while (hasEpsProd(symbol, data)) {
-						if (++index >= right.length) {
-							childFinishers.addAll(finishers);
-							break;
-						}
-
-						symbol = right[index];
-						childFinishers.addAll(mapOfBeginings.get(symbol));
-					}
-				}
-
-				String postDot = right[indexOfDot()+1];
-				for (ProductionRule p : data.getGrammarProductions()) {
-					if (p.getLeftSide().equals(postDot)) {
-						List<String> rightSide = new ArrayList<>();
-						rightSide.add(null);
-						if (!(p.getRightSide().size() == 1 && p.getRightSide().get(0).value.equals("$"))) {
-							p.getRightSide().forEach(s -> rightSide.add(s.value));//<<<bilo samo ovo bez ovo if-a
-						}
-
-						String[] rightSideArray = rightSide.toArray(new String[rightSide.size()]);
-
-						ENKAState child = get(p.getLeftSide(), rightSideArray, childFinishers);
-
-						if (child == null) {
-							child = new ENKAState(p.getLeftSide(), rightSideArray);
-							child.finishers = childFinishers;
-							System.err.println(toString() + "created:" + child.toString());
-							child.findYourCrossings(data, mapOfBeginings);
-						}
-
-						eCrossings.add(child);
-					}
-				}
 			}
 		}
 	}
