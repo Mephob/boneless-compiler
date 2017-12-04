@@ -1,4 +1,7 @@
 
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.nio.file.Paths;
 import java.util.*;
 
 
@@ -210,21 +213,14 @@ public class TableGenerator {
 	}
 
 
-	public static void main(String[] args) {
-		System.out.println(generateDKA(Arrays.asList(
-			  "<atom>",
-			  " OPERAND",
-			  " UMINUS <atom>",
-			  " LIJEVA_ZAGRADA <expr> DESNA_ZAGRADA",
-			  "<expr>",
-			  " <atom>",
-			  " <expr> OP_MINUS <atom>"), "<expr>"));
+	public static void main(String[] args) throws IOException {
+		System.out.println(generateENKA(new InputFileParser(Paths.get("filesNshit/langdefs/minusLang.san")).getData()));
 
 	}
 
 
-	public static DKA generateDKA(List<String> lines, String firstString) {
-		ENKA enka = generateENKA(lines, firstString);
+	public static DKA generateDKA(SyntaxAnalyzerData data) {
+		ENKA enka = generateENKA(data);
 		//System.out.println(enka);
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
 
@@ -307,10 +303,53 @@ public class TableGenerator {
 	}
 
 
-	private static ENKA generateENKA(List<String> lines, String firstString) {
+	private static ENKA generateENKA(SyntaxAnalyzerData data) {
 		ENKA result = new ENKA();
-		ENKA.ENKAState first = null;
-		Set<String> thingies = new HashSet<>();
+
+		//{a, b, c} and stuff
+
+		List<String> thingiesList = new ArrayList<>();
+		thingiesList.addAll(data.getNonterminalSymbols());
+		thingiesList.addAll(data.getTerminalSymbols());
+
+		boolean[][] beginings = new boolean[thingiesList.size()][thingiesList.size()];
+		for (ENKA.ENKAState enkaS : result.states) {
+			if (enkaS.right[0] != null) {
+				beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[0])] = true;
+			} else if (enkaS.right.length == 1) {
+				for (ENKA.ENKAState e : result.states) {
+					for (int i = 0; i < e.right.length - 2; i++) {
+						if (e.right.length == 1) {
+							continue;
+						}
+						if (e.right[i] == null && e.right[i + 1].equals(enkaS.left)) {
+							beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[i + 2])] = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		findBeginings(beginings, thingiesList);
+
+		ENKA.ENKAState buff = result.new ENKAState("<S'>", new String[]{"*", data.getNonterminalSymbols().get(0)});
+		ENKA.ENKAState after = result.new ENKAState("<S'>", new String[]{data.getNonterminalSymbols().get(0), "*"});
+		buff.crossings.put(data.getNonterminalSymbols().get(0), after);
+
+		//podrazumijeva se da je prvo stanje prvo stanji i prijelaz u tekstualnoj datoteci
+		//buff.eCrossings = Arrays.asList(first);
+		//ENKA.ENKAState firstForAutistLambda = data.getNonterminalSymbols().get(0);
+		//System.out.println(first.left);
+		//result.states.forEach(s -> {
+		//	if (s.left.equals(firstForAutistLambda.left) && s.indexOfDot() == 0) {
+		//		buff.eCrossings.add(s);
+		//	}
+		//});
+
+		//buff.propagateFinishers(beginings, thingiesList, Collections.singleton("~"));
+		/*ENKA.ENKAState first = null;
+
 
 		String ref = null;
 		boolean firstDone = false;
@@ -367,53 +406,17 @@ public class TableGenerator {
 					e.eCrossings.add(f);
 				}
 			}
-		}
-
-		//{a, b, c} and stuff
-		boolean[][] beginings = new boolean[thingies.size()][thingies.size()];
-		List<String> thingiesList = new ArrayList<>(thingies);
-		for (ENKA.ENKAState enkaS : result.states) {
-			if (enkaS.right[0] != null) {
-				beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[0])] = true;
-			} else if (enkaS.right.length == 1) {
-				for (ENKA.ENKAState e : result.states) {
-					for (int i = 0; i < e.right.length - 2; i++) {
-						if (e.right.length == 1) {
-							continue;
-						}
-						if (e.right[i] == null && e.right[i + 1].equals(enkaS.left)) {
-							beginings[thingiesList.indexOf(enkaS.left)][thingiesList.indexOf(enkaS.right[i + 2])] = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		findBeginings(beginings, thingiesList);
+		}*/
 
 
 
-		ENKA.ENKAState buff = result.new ENKAState("<S'>", new String[]{"*", first.left});
-		ENKA.ENKAState after = result.new ENKAState("<S'>", new String[]{first.left, "*"});
-		buff.crossings.put(first.left, after);
 
-		//podrazumijeva se da je prvo stanje prvo stanji i prijelaz u tekstualnoj datoteci
-		//buff.eCrossings = Arrays.asList(first);
-		ENKA.ENKAState firstForAutistLambda = first;
-		//System.out.println(first.left);
-		result.states.forEach(s -> {
-			if (s.left.equals(firstForAutistLambda.left) && s.indexOfDot() == 0) {
-				buff.eCrossings.add(s);
-			}
-		});
 
-		buff.propagateFinishers(beginings, thingiesList, Collections.singleton("~"));
+
 		//first.calcluateChildEpsFinishers(beginings, thingiesList);
 
 
-
-
+		System.err.println(result.n);	//---------------------------------------------------------------
 		return result;
 	}
 
@@ -623,13 +626,74 @@ public class TableGenerator {
 			}
 
 			private void propagateFinishers(boolean[][] beginings, List<String> thingiesList, Set<String> finishers) {
-				Set<String> buff = new HashSet<>(this.finishers);
-				this.finishers.addAll(finishers);
-				//epsCalculated = true;
+				//Set<String> buff = new HashSet<>(this.finishers);
+				if (!this.finishers.isEmpty()) {
+					if (indexOfDot() != 0) {
+						return;
+					}
+					for (ENKAState e : ENKA.this.states) {
+						//System.err.println(e.left +  ":" + this.left + "=" +e.left.equals(this.left));
+						//System.err.println(Arrays.toString(e.right) + ":" + Arrays.toString(this.right) + "=" + Arrays.equals(e.right, this.right));
+						//System.err.println(e.finishers + ":" + finishers + e.finishers.equals(finishers));
+						//System.err.println();
+						if (e.left.equals(this.left) && Arrays.equals(e.right, this.right) && e.finishers.equals(finishers)) {
+							//System.err.println(e.mainString() + e.finishers + " is already here for:" + this.mainString() + e.finishers);
+							//System.err.println("------------------------------");
+							return;
+						}
+					}
 
-				if (buff.equals(this.finishers)) {
+					//System.err.println("making new for: " + this.mainString() + this.finishers + ".for finishers: " + finishers);
+					//System.err.println("------------------------------");
+
+					List<ENKAState> newStates = new ArrayList<>();
+					//for (int i = this.indexOfDot(), n = this.indexOfDot(); i < this.right.length; i++) {
+					//	ENKAState newEnkaStateWithDifferentEnd = ENKA.this.new ENKAState(this.left, this.right);
+					//	if (prev != null) {
+					//		newEnkaStateWithDifferentEnd.crossings.put();
+					//		prev = newEnkaStateWithDifferentEnd;
+					//	}
+					//}
+					//povezi liniju
+					for (int i = 0; i<newStates.size(); i++) {
+						ENKAState buff = newStates.get(i);
+						buff.crossings.put(buff.right[buff.indexOfDot()+1], newStates.get(i+1));
+					}
+
+					//todo for petlja za generirati sve podnizove, i provijeriti da li treba podniz
+					//ENKAState newEnkaStateWithDifferentEnd = ENKA.this.new ENKAState(this.left, this.right);
+					//newEnkaStateWithDifferentEnd.finishers = finishers;
+
+
+					//todo for petlja za eps prijelaze
+					/*for (ENKAState e : ENKA.this.states) {
+						if (e.right[e.indexOfDot()+1].equals(newEnkaStateWithDifferentEnd.left)
+							  //&& newEnkaStateWithDifferentEnd.indexOfDot() == 0
+							  && e.finishers.equals(newEnkaStateWithDifferentEnd.finishers)) {
+							//epscrosisngs:e.crossings.put(newEnkaStateWithDifferentEnd.left, newEnkaStateWithDifferentEnd);
+							e.eCrossings.add(newEnkaStateWithDifferentEnd);
+						}
+
+						if (newEnkaStateWithDifferentEnd.right[e.indexOfDot()+1].equals(e.left)
+							  && e.finishers.equals(newEnkaStateWithDifferentEnd.finishers)) {
+							//e.crossings.put(newEnkaStateWithDifferentEnd.left, newEnkaStateWithDifferentEnd);
+
+						}
+					}*/
+/*
+					for (String s : newEnkaStateWithDifferentEnd.crossings.keySet()) {
+						newEnkaStateWithDifferentEnd.crossings.get(s).propagateFinishers(beginings, thingiesList, finishers);
+					}
+					newEnkaStateWithDifferentEnd.calcluateChildEpsFinishers(beginings, thingiesList);*/
 					return;
 				}
+
+				this.finishers = finishers;
+				//epsCalculated = true;
+
+				//if (buff.equals(this.finishers)) {
+				//	return;
+				//}
 
 				for (String s : crossings.keySet()) {
 					crossings.get(s).propagateFinishers(beginings, thingiesList, finishers);
