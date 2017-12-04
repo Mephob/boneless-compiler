@@ -1,5 +1,4 @@
 
-import lab1.LexerData;
 
 import java.io.FileInputStream;
 import java.io.IOException;
