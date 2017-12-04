@@ -72,7 +72,7 @@ public class SA {
 				}
 
 			} else if (action.startsWith("Pomakni")) {
-				stack.push(new Triplet(token, Integer.parseInt(action.split(" ")[1]), new ArrayList<>()));
+				stack.push(new Triplet(currentInput.toString(), Integer.parseInt(action.split(" ")[1]), new ArrayList<>()));
 				currentIndex++;
 			}
 		}
@@ -105,6 +105,7 @@ public class SA {
 		StringBuilder sb = new StringBuilder();
 
 		for (int i = 0; i < depth; i++) {
+			//todo: prebaci crticu u space invaders
 			sb.append("-");
 		}
 		sb.append(boi.name);
