@@ -1,9 +1,10 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class ProductionRule {
+public class ProductionRule implements Serializable {
 	private String leftSide;
 	private List<Symbol> rightSide;
 

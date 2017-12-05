@@ -46,6 +46,15 @@ public class SA {
 				int shift = recoveryProcedure(currentIndex, inputValues, table, data.getSyncSymbols());
 				currentIndex += shift;
 				continue;
+			} else if (action.startsWith("Prihvati") || stack.peek().name != null && stack.peek().name.startsWith("<S'>")) {
+
+					String[] values = action.split(" ");
+					List<Triplet> bois = new ArrayList<>();
+
+				biggeBuoy = stack.pop();
+				//System.err.println(biggeBuoy + " " + " ************ ");
+
+							break;
 
 			} else if(action.startsWith("Reduciraj")) {
 				List<Triplet> bois = new ArrayList<>();
@@ -55,17 +64,16 @@ public class SA {
 					bois.add(stack.pop());
 				}
 
-				int index = stack.peek().value;
-				String putAction = table.findAction(index, values[2]);
-				if (action.startsWith("Prihvati")) {
-					//System.err.println("Prihvaca");
-					String name = values[2];
-					biggeBuoy = new Triplet(name, 0, bois);
-
+				if(values[2].equals("<S'>")){
+					biggeBuoy = new Triplet(values[2], 0, bois);
 					break;
+				} else {
+					int index = stack.peek().value;
+					String putAction = table.findAction(index, values[2]);
+					stack.push(new Triplet(values[2], Integer.parseInt(putAction.split(" ")[1]), bois));
 				}
-				//System.err.println(putAction);
-				stack.push(new Triplet(values[2], Integer.parseInt(putAction.split(" ")[1]), bois));
+
+
 
 				//bila je epsilon redukcija
 				if (Integer.parseInt(values[1]) == 0) {
@@ -99,7 +107,7 @@ public class SA {
 				sb.append(" ").append(terminal);
 			}
 		}
-		System.err.println(sb.toString());
+		//System.err.println(sb.toString());
 	}
 
 	private static int recoveryProcedure(int index, List<Input> imp, LRTable table, List<SynchronizingSymbol> synchros) {
@@ -134,6 +142,7 @@ public class SA {
 	 */
 	public static void printTree(Triplet boi, int depth) {
 		//dosta rekurzije ako sam dosao do lista
+		//System.err.println(depth);
 		if (boi.children.isEmpty()) {
 			String rez = buildString(boi, depth);
 			System.out.println(rez);
@@ -154,8 +163,7 @@ public class SA {
 		StringBuilder sb = new StringBuilder();
 
 		for (int i = 0; i < depth; i++) {
-			//todo: prebaci crticu u space invaders
-			sb.append("-");
+			sb.append(" ");
 		}
 		sb.append(boi.name);
 

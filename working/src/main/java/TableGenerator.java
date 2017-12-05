@@ -112,10 +112,6 @@ public class TableGenerator {
 
 		String matrixEntry = "Reduciraj ";
 		for (int i = 0; i < lines.length; i++) {
-			if (lines[i].startsWith("<S'>")) {
-				//skip
-			} else {
-
 				String right = lines[i].split("\\*")[1];
 				char[] rightChar = right.toCharArray();
 				if (rightChar[0] == ',') {//we found a potential reduction
@@ -150,7 +146,6 @@ public class TableGenerator {
 				}
 
 			}
-		}
 
 		/*
 		 * Reduciraj 3 <A>
@@ -186,9 +181,6 @@ public class TableGenerator {
 	private static Set<String> horseShoe(String[] lines) {
 		Set<String> reducedBy = new TreeSet<>();
 		for (int i = 0; i < lines.length; i++) {
-			if (lines[i].startsWith("<S'>")) {
-				//skip
-			} else {
 
 				String right = lines[i].split("\\*")[1];
 
@@ -213,7 +205,6 @@ public class TableGenerator {
 					}
 				}
 			}
-		}
 
 		return reducedBy;
 	}
