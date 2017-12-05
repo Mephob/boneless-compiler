@@ -38,7 +38,7 @@ public class TableGenerator {
 		//iteriramo sva stanja, i punimo matricu na mjesto koje odgovara onom za prijelaze
 		//iteriramo prijelaze
 		for (int i = 0; i < numberOfStates; i++) {
-			System.err.println(dka.getStates().get(i).text);
+			//System.err.println(dka.getStates().get(i).text);
 
 			String[] lines = dka.getStates().get(i).text.split("\n");
 
@@ -60,6 +60,16 @@ public class TableGenerator {
 				//System.out.println("im in");
 
 				matrix[i][terminalSymbols.size()] = nyahaha(lines, "~");
+			}
+
+			if(lines.length == 1 && lines[0].trim().startsWith("<S'>")) {
+				String rightFull = lines[0].split("->")[1].trim();
+				String[] leftRight = rightFull.split("\\*");
+				leftRight[0] = leftRight[0].trim();
+				leftRight[1] = leftRight[1].trim().substring(1).trim();
+				if(leftRight[0].equals(nonterminalSymbols.get(0)) && leftRight[1].equals("{ ~ }")) {
+					matrix[i][terminalSymbols.size()] = new String("Prihvati");
+				}
 			}
 
 			int j = 0;
@@ -213,17 +223,20 @@ public class TableGenerator {
 	}
 
 	//###################################################################################################################################
+
 	public static void main(String[] args) throws IOException {
 		//minusLang
 		//kanon_gramatika
-		System.out.println(generateDKA(new InputFileParser(Paths.get("main/resources/simplePpjLang.san")).getData()));
+		DKA deka = generateDKA(new InputFileParser(Paths.get("src/main/resources/simplePpjLang.san")).getData());
+		System.err.println(deka);
 
 	}
-
 
 	public static DKA generateDKA(SyntaxAnalyzerData data) {
 		ENKA enka = generateENKA(data);
 		//System.err.println(enka.n);
+		//printajBrojPrijelaza(enka);
+
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
 
 		ENKA.ENKAState first = null;
@@ -253,6 +266,22 @@ public class TableGenerator {
 		return result;
 	}
 
+	private static void printajBrojPrijelaza(ENKA enka) {
+		int counter = 0;
+		for (ENKA.ENKAState e : enka.states) {
+			for (String s : e.crossings.keySet()) {
+				counter++;
+			}
+		}
+
+		for (ENKA.ENKAState e : enka.states) {
+			for (ENKA.ENKAState st : e.eCrossings){
+				counter++;
+			}
+		}
+		System.out.println(counter);
+	}
+
 	private static void findEpsSurrounding(Set<ENKA.ENKAState> set, ENKA.ENKAState e) {
 		set.add(e);
 		if (set.addAll(e.eCrossings)) {
@@ -261,7 +290,6 @@ public class TableGenerator {
 			}
 		}
 	}
-
 
 	private static ENKA generateENKA(SyntaxAnalyzerData data) {
 		ENKA result = new ENKA();
@@ -313,7 +341,6 @@ public class TableGenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 		buff.findYourCrossings(data, mapOfBeginings);
-		//System.err.println(result.n);
 		return result;
 	}
 
@@ -335,7 +362,6 @@ public class TableGenerator {
 
 		return bob.toString();
 	}
-
 
 	private static Map<String, Set<String>> findBeginings(boolean[][] field, List<String> elements) {
 		boolean[] done = new boolean[field.length];
@@ -392,7 +418,6 @@ public class TableGenerator {
 		return result;
 	}
 
-
 	private static boolean hasEpsProd(String symbol, SyntaxAnalyzerData data) {
 		for (ProductionRule p : data.getGrammarProductions()) {
 			if (p.getLeftSide().equals(symbol)
@@ -407,6 +432,14 @@ public class TableGenerator {
 
 	public static class DKA {
 
+		private DKAState get(Set<ENKA.ENKAState> enkaStates) {
+			for (DKAState d : states) {
+				if (d.enkaStates.equals(enkaStates)) {
+					return d;
+				}
+			}
+			return null;
+		}
 
 		private DKAState get(String text) {
 			for (DKAState d : states) {
@@ -444,7 +477,7 @@ public class TableGenerator {
 
 					String dkaText = generateEnkaToDkaText(includeEps); //epsSurroundings.get(allCrossingsForE));
 
-					DKAState buff = DKA.this.get(dkaText);
+					DKAState buff = DKA.this.get(includeEps);
 
 					if (buff == null) {
 						buff = DKA.this.new DKAState(dkaText);
@@ -527,7 +560,6 @@ public class TableGenerator {
 		}
 
 	}
-
 
 	private static class ENKA {
 
@@ -688,7 +720,7 @@ public class TableGenerator {
 				if (follower == null) {
 					follower = new ENKAState(left, followerRight);
 					follower.finishers = finishers;
-					System.err.println(toString() + "created:" + follower.toString());
+					//System.err.println(toString() + "created:" + follower.toString());
 					follower.findYourCrossings(data, mapOfBeginings);
 				}
 
@@ -731,7 +763,7 @@ public class TableGenerator {
 						if (child == null) {
 							child = new ENKAState(p.getLeftSide(), rightSideArray);
 							child.finishers = childFinishers;
-							System.err.println(toString() + "created:" + child.toString());
+							//System.err.println(toString() + "created:" + child.toString());
 							child.findYourCrossings(data, mapOfBeginings);
 						}
 

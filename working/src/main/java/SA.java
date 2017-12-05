@@ -57,9 +57,7 @@ public class SA {
 
 				int index = stack.peek().value;
 				String putAction = table.findAction(index, values[2]);
-				if (putAction == null && token.equals("~")
-						&& stack.get(0).equals(new Triplet(null, 0, new ArrayList<>()))
-						) {
+				if (action.startsWith("Prihvati")) {
 					//System.err.println("Prihvaca");
 					String name = values[2];
 					biggeBuoy = new Triplet(name, 0, bois);
@@ -88,22 +86,23 @@ public class SA {
 	Prima trenutno stanje, niz koji je izazvao pogresku, tablica i svi zavrsni znakovi.
 	Ispisuje poruku o pogreski.
 	 */
-	private static void recoveryMessage(int currentState, String actualText, LRTable table, List<String> terminals) {
+	private static void recoveryMessage(int currentState, String actualText, LRTable table, List<TerminalSymbol> terminals) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Pogreska se dogodila u retku: ").append(currentState).append("\n")
 				.append("Procitan je niz: ").append(actualText).append("\n").append("\n")
 				.append("Mozda ste mislili na nesto od ovoga:");
 
 		//trazi sve zavrsne za koje postoji neka akcija, tj za koje ne bi doslo do pogreske
-		for (String terminal : terminals) {
-			if (table.findAction(currentState, terminal) != null) {
+		for (TerminalSymbol terminal : terminals) {
+			String kms = terminal.value;
+			if (table.findAction(currentState, kms) != null) {
 				sb.append(" ").append(terminal);
 			}
 		}
 		System.err.println(sb.toString());
 	}
 
-	private static int recoveryProcedure(int index, List<Input> imp, LRTable table, List<String> synchros) {
+	private static int recoveryProcedure(int index, List<Input> imp, LRTable table, List<SynchronizingSymbol> synchros) {
 		int counter = 0;
 		int tempIndex = index;
 		String znak;
@@ -111,7 +110,7 @@ public class SA {
 		//faza 1 - trazimo prvi sljedeci sinkronizacijski
 		do {
 			znak = imp.get(tempIndex).token;
-			if (synchros.contains(znak)) {
+			if (synchros.contains(new SynchronizingSymbol(znak))) {
 				break;
 			}
 			tempIndex++;

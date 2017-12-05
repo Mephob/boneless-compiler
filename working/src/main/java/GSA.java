@@ -4,6 +4,8 @@ import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GSA {
 
@@ -21,9 +23,21 @@ public class GSA {
 		System.out.println(data.getSyncSymbols());
 		System.out.println(data.getGrammarProductions());
 
-		LRTable table = null;
 		//TODO: Waiting for the new ENKA input requierments
-//		TableGenerator.generateTable(TableGenerator.generateDKA(data.getGrammarProductions(), data.getNonterminalSymbols().get(0)), data.getNonterminalSymbols(), data.getTerminalSymbols());
+		List<String> nezav = new ArrayList();
+		List<String> zav = new ArrayList<>();
+		List<NonterminalSymbol> nonte = data.getNonterminalSymbols();
+		List<TerminalSymbol> ter = data.getTerminalSymbols();
+
+		for (NonterminalSymbol t : nonte) {
+			nezav.add(t.value);
+		}
+
+		for (TerminalSymbol t : ter) {
+			zav.add(t.value);
+		}
+
+		LRTable table = TableGenerator.generateTable(TableGenerator.generateDKA(data), nezav, zav);
 
 		try (FileOutputStream fileOut = new FileOutputStream("analizator/lrtable.ser");
 			 ObjectOutputStream out = new ObjectOutputStream(fileOut);
