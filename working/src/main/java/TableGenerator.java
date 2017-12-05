@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Paths;
@@ -214,14 +215,15 @@ public class TableGenerator {
 	//###################################################################################################################################
 	public static void main(String[] args) throws IOException {
 		//minusLang
-		System.out.println(generateDKA(new InputFileParser(Paths.get("main/resources/minusLang.san")).getData()));
+		//kanon_gramatika
+		System.out.println(generateDKA(new InputFileParser(Paths.get("main/resources/simplePpjLang.san")).getData()));
 
 	}
 
 
 	public static DKA generateDKA(SyntaxAnalyzerData data) {
 		ENKA enka = generateENKA(data);
-		System.err.println(enka.n);
+		//System.err.println(enka.n);
 		Map<Integer, Set<Integer>> enkToDkaMap = new HashMap<>();
 
 		ENKA.ENKAState first = null;
@@ -233,72 +235,31 @@ public class TableGenerator {
 		}
 
 		DKA result = new DKA();
-		List<ENKA.ENKAState> todo = new ArrayList<>();
-		todo.add(first);
-		Set<ENKA.ENKAState> done = new HashSet<>();
 
-		//add all the states
-		while (!todo.isEmpty()) {
-			Set<ENKA.ENKAState> epsSurrounding = new HashSet<>();
-			epsSurrounding.add(todo.get(0));
-
-			Set<ENKA.ENKAState> diff = new HashSet<>();
-			while (!diff.equals(epsSurrounding)) {
-				diff = new HashSet<>(epsSurrounding);
-				for (ENKA.ENKAState e : diff) {
-					epsSurrounding.addAll(e.eCrossings);
-				}
-			}
-
-			done.addAll(epsSurrounding);
-			epsSurrounding.forEach(s -> {
-				s.crossings.forEach((key, c) -> {
-					if (!done.contains(c) && !todo.contains(c)) {
-						todo.add(c);
-					}
-				});
-			});
-			todo.remove(0);
-
-			StringBuilder bob = new StringBuilder();
-			for (ENKA.ENKAState e : epsSurrounding) {
-				bob.append(e.mainString());
-				bob.append(", { ");
-				for (String s : e.finishers) {
-					bob.append(s + ",");
-				}
-				bob.deleteCharAt(bob.length() - 1);
-				bob.append(" }\n");
-			}
-			DKA.DKAState dkaBuff = result.new DKAState(bob.toString());
-			//map nka states to dka states id
-			epsSurrounding.forEach(e -> {
-				if (enkToDkaMap.get(e.id) == null) {
-					enkToDkaMap.put(e.id, new HashSet<>(Arrays.asList(dkaBuff.id)));
-
-				} else {
-					enkToDkaMap.get(e.id).add(dkaBuff.id);
-				}
-			});
+		Map<ENKA.ENKAState, Set<ENKA.ENKAState>> epsSurroundings = new HashMap<>();
+		for (ENKA.ENKAState e : enka.states) {
+			Set<ENKA.ENKAState> buff = new HashSet<>();
+			findEpsSurrounding(buff, e);
+			epsSurroundings.put(e, buff);
 		}
 
-		//connect all the states
-		enka.states.forEach(s -> {
-			Set<Integer> dkaEqList = enkToDkaMap.get(s.id);
-			//System.out.println(s.toString() + dkaEqList);
-			dkaEqList.forEach(dkaEq -> {
-				s.crossings.forEach((key, state) -> {
-					//System.out.println("worikn on:" + dkaEq + ">>>" + key + "--->>>>" + enkToDkaMap.get(state.id));
-					enkToDkaMap.get(state.id).forEach(a -> {
-						result.getForId(dkaEq).crossings.put(key, result.getForId(a));
-					});
+		String firstStateString = generateEnkaToDkaText(epsSurroundings.get(first));
 
-				});
-			});
-		});
+		DKA.DKAState firstDka = result.new DKAState(firstStateString);
+		firstDka.enkaStates = epsSurroundings.get(first);
 
-		System.err.println(result.n);
+		firstDka.findStates(epsSurroundings);
+
 		return result;
+	}
+
+	private static void findEpsSurrounding(Set<ENKA.ENKAState> set, ENKA.ENKAState e) {
+		set.add(e);
+		if (set.addAll(e.eCrossings)) {
+			for (ENKA.ENKAState eBuff : e.eCrossings) {
+				findEpsSurrounding(set, eBuff);
+			}
+		}
 	}
 
 
@@ -354,6 +315,25 @@ public class TableGenerator {
 		buff.findYourCrossings(data, mapOfBeginings);
 		//System.err.println(result.n);
 		return result;
+	}
+
+	private static String generateEnkaToDkaText(Set<ENKA.ENKAState> states) {
+		StringBuilder bob = new StringBuilder();
+
+		List<ENKA.ENKAState> sort = new ArrayList<>(states);
+		sort.sort(Comparator.comparingInt(o -> o.id));
+
+		for (ENKA.ENKAState e3 : states) {
+			bob.append(e3.mainString());
+			bob.append(", { ");
+			for (String s : e3.finishers) {
+				bob.append(s + ",");
+			}
+			bob.deleteCharAt(bob.length() - 1);
+			bob.append(" }\n");
+		}
+
+		return bob.toString();
 	}
 
 
@@ -427,11 +407,54 @@ public class TableGenerator {
 
 	public static class DKA {
 
+
+		private DKAState get(String text) {
+			for (DKAState d : states) {
+				if (d.text.equals(text)) {
+					return d;
+				}
+			}
+
+			return null;
+		}
+
 		public class DKAState {
 
 			private int id;
 			private String text;
 			private Map<String, DKAState> crossings = new HashMap<>();
+			private Set<ENKA.ENKAState> enkaStates;
+
+			private void findStates (Map<ENKA.ENKAState, Set<ENKA.ENKAState>> epsSurroundings) {
+				Map<String, Set<ENKA.ENKAState>> allCrossingsForE = new HashMap<>();
+
+				for (ENKA.ENKAState e : enkaStates) {
+					for (String s : e.crossings.keySet()) {
+						if (allCrossingsForE.get(s) == null) {
+							allCrossingsForE.put(s, new HashSet<>(Collections.singleton(e.crossings.get(s))));
+						} else {
+							allCrossingsForE.get(s).add(e.crossings.get(s));
+						}
+					}
+				}
+
+				for (String s : allCrossingsForE.keySet()) {
+					Set<ENKA.ENKAState> includeEps = new HashSet<>();
+					allCrossingsForE.get(s).forEach(x -> includeEps.addAll(epsSurroundings.get(x)));
+
+					String dkaText = generateEnkaToDkaText(includeEps); //epsSurroundings.get(allCrossingsForE));
+
+					DKAState buff = DKA.this.get(dkaText);
+
+					if (buff == null) {
+						buff = DKA.this.new DKAState(dkaText);
+						buff.enkaStates = includeEps;
+						buff.findStates(epsSurroundings);
+					}
+
+					crossings.put(s, buff);
+				}
+			}
 
 			private DKAState(String text) {
 				id = ++n;
