@@ -1,0 +1,6 @@
+# IntelliJ
+.idea
+target
+*.iml
+/source/ediary/
+/source/frontend/
