@@ -1,5 +1,7 @@
 import java.util.*;
 
+import static java.lang.System.exit;
+
 /*
     Koristio samo za generiranje Cons enuma, nije nam vise potrebno
     al nek ostane za svaki slucaj u slucaju da sam nes fulao tu negdje
@@ -32,5 +34,13 @@ public class Util {
         }
 
         sc.close();
+    }
+
+    /*
+        Ako je doslo do neke cudne greske samo ispisi i prekini s radom.
+    */
+    public static void greska(String imeMetode) {
+        System.err.println("Neka greska u metodi " + imeMetode);
+        exit(1);
     }
 }

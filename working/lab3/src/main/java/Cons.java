@@ -1,3 +1,15 @@
+
+/*
+    Ovdje su konstovi za sve definicije, deklaracije, liste, izraze,
+    naredbe, brojeve, tipove, sve i svasta, raznorazni stringovi koji
+    se cesto koriste i tak.
+
+    Takoder ima par fora metoda koje rade provjere oko implicitnog i eksplicitnog
+    castanja, neke pretvorbe i takve stvari.
+
+    !!!NAPOMENA!!! nek neka dobra dusa provjeri jel nesto tipa Cons.prvi.equals(Cons.drugi)
+    vraca dobar rezultat (trebali bi se stringovi usporedivat) i ak nije nek javi asap.
+ */
 public enum Cons {
     //pocetak
     PRIJEVODNA_JEDINICA("<prijevodna_jedinica>"),
@@ -40,6 +52,9 @@ public enum Cons {
     PRIMARNI_IZRAZ("<primarni_izraz>"),
     UNARNI_IZRAZ("<unarni_izraz>"),
 
+    BINARNI_IZRAZ("BINARNI_IZRAZ"),
+    LOGICKI_IZRAZ("LOGICKI_IZRAZ"),
+
     //naredbe
     NAREDBA("<naredba>"),
     NAREDBA_GRANANJA("<naredba_grananja>"),
@@ -61,10 +76,14 @@ public enum Cons {
     //misc
     BROJ("BROJ"),
     NIZ_ZNAKOVA("NIZ_ZNAKOVA"),
+    NIZ_CONST_ZNAKOVA("NIZ_CONST_ZNAKOVA"),
+    NIZ_BROJEVA("NIZ_BROJEVA"),
+    NIZ_CONST_BROJEVA("NIZ_CONST_BROJEVA"),
     ZNAK("ZNAK"),
     IDN("IDN"),
     TOCKAZAREZ("TOCKAZAREZ"),
     ZAREZ("ZAREZ"),
+    GRESKA("GRESKA"),
 
     //kljucne rijeci
     KR_BREAK("KR_BREAK"),
@@ -78,6 +97,10 @@ public enum Cons {
     KR_RETURN("KR_RETURN"),
     KR_VOID("KR_VOID"),
     KR_WHILE("KR_WHILE"),
+
+    KR_CONST_INT("KR_CONST_INT"),
+    KR_CONST_CHAR("KR_CONST_CHAR"),
+    KR_CONST_NIZ("KR_CONST_NIZ"),
 
     //operatori
     MINUS("MINUS"),
@@ -106,9 +129,107 @@ public enum Cons {
 
     private Cons(final String text) {
             this.text = text;
-        }
+    }
 
-        public String toString() {
-            return text;
+    public String toString() {
+        return text;
+    }
+
+    /*
+        Provjerava koji tip niza je glavni za zadani neki tip
+     */
+    public static Cons toNizType(Cons tip) {
+        if (tip == KR_INT) return NIZ_BROJEVA;
+        if (tip == KR_CHAR) return NIZ_ZNAKOVA;
+        if (tip == KR_CONST_INT) return NIZ_CONST_BROJEVA;
+        if (tip == KR_CONST_CHAR) return NIZ_CONST_ZNAKOVA;
+
+        //u slucaju da nije niti jedan od ponudena 4 tipa vrati gresku
+        //pa nek se pozivatelj bakce s tim...
+        return GRESKA;
+    }
+
+    /*
+        Pretvara non-const tipove u const tipove.
+     */
+    public static Cons toConsType(Cons tip) {
+        //tip je vec const
+        if (tip == KR_CONST_INT || tip == KR_CONST_CHAR) return tip;
+        if (tip == KR_INT) return KR_CONST_INT;
+        if (tip == KR_CHAR) return KR_CONST_CHAR;
+
+        //u slucaju da nije niti jedan od ponudena 4 tipa vrati gresku
+        return GRESKA;
+    }
+
+    /*
+        Pretvara const tipove u non-const tipove
+     */
+    public static Cons toNonConsType(Cons tip) {
+        //jesu li vec non-const
+        if (tip == KR_INT || tip == KR_CHAR) return tip;
+        if (tip == KR_CONST_CHAR) return KR_CHAR;
+        if (tip == KR_CONST_INT) return KR_INT;
+
+        //u slucaju da nije niti jedan od ponudena 4 tipa vrati gresku
+        return GRESKA;
+    }
+
+    /*
+        Provjerava spada li tip u T skupinu (INT, const INT, CHAR, const CHAR).
+     */
+    public static boolean isTypeT(Cons type) {
+        return (type == KR_INT || type == KR_CONST_INT ||
+                type == KR_CHAR || type == KR_CONST_CHAR);
+    }
+
+    /*
+        Self explanatory.
+     */
+    public static boolean notTypeT(Cons type) {
+        return !isTypeT(type);
+    }
+
+    /*
+        Provjerava jesu li dva tipa medusobno kompatibilna tijekom implicitnog castanja.
+     */
+    public static boolean isImplicitlyCastable(Cons from, Cons to) {
+        //ako su isti
+        if (from == to) {
+            return true;
         }
+        //provjeri za INT
+        if ((from == KR_INT && to == KR_CONST_INT) ||
+                (from == KR_CONST_INT && to == KR_INT)) {
+            return true;
+        }
+        //provjera za CHAR
+        if ((from == KR_CHAR && to == KR_CONST_CHAR) ||
+                (from == KR_CONST_CHAR && to == KR_CHAR)) {
+            return true;
+        }
+        //provjera za nizove
+        if ((from == NIZ_BROJEVA && to == NIZ_CONST_BROJEVA) ||
+                (from == NIZ_CONST_BROJEVA && to == NIZ_BROJEVA) ||
+                (from == NIZ_ZNAKOVA && to == NIZ_CONST_ZNAKOVA) ||
+                (from == NIZ_CONST_ZNAKOVA && to == NIZ_ZNAKOVA)) {
+            return true;
+        }
+        //provjera za CHAR u INT i obratno, izgleda da i to treba
+        if ((from == KR_CHAR && to == KR_INT) ||
+                (from == KR_INT && to == KR_CHAR)) {
+            return true;
+        }
+        return false;
+    }
+
+    /*
+        Provjerava jesu li dva tipa medusobno kompatibilna kod eksplicitnog castana.
+     */
+    public static boolean isExplicitlyCastable(Cons from, Cons to) {
+        if (notTypeT(from) || notTypeT(to)) {
+            return false;
+        }
+        return true;
+    }
 }
