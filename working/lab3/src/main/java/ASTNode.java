@@ -13,9 +13,10 @@ public class ASTNode {
     public String name;
     public String names;        //koristi se u listama
 
-    public Cons tip;
-    public Cons ntip;           //koristi se kod deklaracija nizova
-    public Cons l_izraz;
+    public String tip;
+    public String ntip;           //koristi se kod deklaracija nizova
+    public boolean l_izraz;
+    public List<String> tipovi;
 
     public int broj_elem;
     public int appearance_line; //za ispis pogreske
@@ -25,20 +26,21 @@ public class ASTNode {
      */
     public ASTNode() {
         children = new ArrayList<>();
+        tipovi = new ArrayList<>();
         return;
     }
 
     /*
-        Vraca kljucnu rijec il kajgod iz cijelog tokena
+        Vraca prvi entry il kajgod iz cijelog tokena
      */
-    public String extractCons() {
+    public String extractFirstFromToken() {
         String[] headSplitter = this.value.split(" ");
 
         if (headSplitter.length == 1) return headSplitter[0];   //nezavrsni znak
         if (headSplitter.length == 3) return headSplitter[0];   //splitan je token
 
         //neka greska u inputu
-        Util.greska("extractCons");
+        Util.greska("extractFirstFromToken");
         return null;
     }
 

@@ -3,55 +3,20 @@
 	| ZNAK
 	| NIZ_ZNAKOVA
 	| L_ZAGRADA <izraz> D_ZAGRADA
-<postfiks_izraz> ::= <primarni_izraz>
-	| <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA
-	| <postfiks_izraz> L_ZAGRADA D_ZAGRADA
-	| <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA
-	| <postfiks_izraz> OP_INC
-	| <postfiks_izraz> OP_DEC
+
 <lista_argumenata> ::= <izraz_pridruzivanja>
 	| <lista_argumenata> ZAREZ <izraz_pridruzivanja>
-<unarni_izraz> ::= <postfiks_izraz>
-	| OP_INC <unarni_izraz>
-	| OP_DEC <unarni_izraz>
-	| <unarni_operator> <cast_izraz>
+
 <unarni_operator> ::= PLUS
 	| MINUS
 	| OP_TILDA
 	| OP_NEG
-<cast_izraz> ::= <unarni_izraz>
-	| L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>
 
 <specifikator_tipa> ::= KR_VOID
 	| KR_CHAR
 	| KR_INT
-<multiplikativni_izraz> ::= <cast_izraz>
-	| <multiplikativni_izraz> OP_PUTA <cast_izraz>
-	| <multiplikativni_izraz> OP_DIJELI <cast_izraz>
-	| <multiplikativni_izraz> OP_MOD <cast_izraz>
-<aditivni_izraz> ::= <multiplikativni_izraz>
-	| <aditivni_izraz> PLUS <multiplikativni_izraz>
-	| <aditivni_izraz> MINUS <multiplikativni_izraz>
-<odnosni_izraz> ::= <aditivni_izraz>
-	| <odnosni_izraz> OP_LT <aditivni_izraz>
-	| <odnosni_izraz> OP_GT <aditivni_izraz>
-	| <odnosni_izraz> OP_LTE <aditivni_izraz>
-	| <odnosni_izraz> OP_GTE <aditivni_izraz>
-<jednakosni_izraz> ::= <odnosni_izraz>
-	| <jednakosni_izraz> OP_EQ <odnosni_izraz>
-	| <jednakosni_izraz> OP_NEQ <odnosni_izraz>
-<bin_i_izraz> ::= <jednakosni_izraz>
-	| <bin_i_izraz> OP_BIN_I <jednakosni_izraz>
-<bin_xili_izraz> ::= <bin_i_izraz>
-	| <bin_xili_izraz> OP_BIN_XILI <bin_i_izraz>
-<bin_ili_izraz> ::= <bin_xili_izraz>
-	| <bin_ili_izraz> OP_BIN_ILI <bin_xili_izraz>
-<log_i_izraz> ::= <bin_ili_izraz>
-	| <log_i_izraz> OP_I <bin_ili_izraz>
-<log_ili_izraz> ::= <log_i_izraz>
-	| <log_ili_izraz> OP_ILI <log_i_izraz>
-<izraz_pridruzivanja> ::= <log_ili_izraz>
-	| <postfiks_izraz> OP_PRIDRUZI <izraz_pridruzivanja>
+
+
 <izraz> ::= <izraz_pridruzivanja>
 	| <izraz> ZAREZ <izraz_pridruzivanja>
 <slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA
@@ -86,7 +51,3 @@
 	| IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA
 	| IDN L_ZAGRADA KR_VOID D_ZAGRADA
 	| IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
-<inicijalizator> ::= <izraz_pridruzivanja>
-	| L_VIT_ZAGRADA <lista_izraza_pridruzivanja> D_VIT_ZAGRADA
-<lista_izraza_pridruzivanja> ::= <izraz_pridruzivanja>
-	| <lista_izraza_pridruzivanja> ZAREZ <izraz_pridruzivanja>
