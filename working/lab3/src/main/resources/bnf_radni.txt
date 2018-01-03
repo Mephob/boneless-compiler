@@ -4,9 +4,6 @@
 	| NIZ_ZNAKOVA
 	| L_ZAGRADA <izraz> D_ZAGRADA
 
-<lista_argumenata> ::= <izraz_pridruzivanja>
-	| <lista_argumenata> ZAREZ <izraz_pridruzivanja>
-
 <unarni_operator> ::= PLUS
 	| MINUS
 	| OP_TILDA
@@ -44,8 +41,6 @@
 	| <lista_parametara> ZAREZ <deklaracija_parametra>
 <deklaracija_parametra> ::= <ime_tipa> IDN
 	| <ime_tipa> IDN L_UGL_ZAGRADA D_UGL_ZAGRADA
-<lista_deklaracija> ::= <deklaracija>
-	| <lista_deklaracija> <deklaracija>
 
 <izravni_deklarator> ::= IDN
 	| IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA

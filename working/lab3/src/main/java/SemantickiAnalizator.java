@@ -124,6 +124,8 @@ public class SemantickiAnalizator {
         }
     }
 
+    /* ========== DEFINICIJE I DEKLARACIJE ========== */
+
     private void vanjskaDeklaracija(ASTNode node) {
         String value = node.value;
         ASTNode dijete = node.children.get(0);
@@ -166,50 +168,10 @@ public class SemantickiAnalizator {
         listaInitDeklaratora(drugo);
     }
 
-    private void imeTipa(ASTNode node) {
-        ASTNode prvo = node.children.get(0);
-
-        if (prvo.value.equals("SPECIFIKATOR_TIPA")) {
-            specifikatorTipa(prvo);
-            node.tip = prvo.tip;
-        } else if (prvo.value.equals("KR_CONST")) {
-            ASTNode drugo = node.children.get(1);
-            specifikatorTipa(drugo);
-            if (drugo.tip.equals("KR_VOID")) {   //sintaksno ispravno al besmisleno
-                terminal(prvo);
-
-                System.out.format("%s ::= KR_CONST(%d,%s) <specifikator_tipa>",
-                        node.value, prvo.appearance_line, prvo.name);
-                exit(1);
-            }
-
-            node.tip = toConsType(drugo.tip);
-        }
-    }
-
-    private void listaInitDeklaratora(ASTNode node) {
-        int size = node.children.size();
-        if (size == 1) {                            //prva produkcija
-            node.children.get(0).ntip = node.ntip;  //pise uz nasljedno svojstvo
-            initDeklarator(node.children.get(0));
-        } else if (size == 3) {                     //druga produkcija
-            ASTNode prvo = node.children.get(0);
-            ASTNode trece = node.children.get(2);
-
-            prvo.ntip = node.ntip;          //nasljedna svojstva
-            listaInitDeklaratora(prvo);
-
-            trece.ntip = node.ntip;
-            initDeklarator(trece);
-        } else {
-            Util.greska("listaInitDeklaratora");
-        }
-    }
-
     /*
-        Ovo nema sanse da radi... nek netko pogleda ko boga vas molim
-        Ocekujem greske?
-     */
+    Ovo nema sanse da radi... nek netko pogleda ko boga vas molim
+    Ocekujem greske?1
+ */
     private void initDeklarator(ASTNode node) {
         int size = node.children.size();
 
@@ -275,6 +237,27 @@ public class SemantickiAnalizator {
         }
     }
 
+    private void imeTipa(ASTNode node) {
+        ASTNode prvo = node.children.get(0);
+
+        if (prvo.value.equals("SPECIFIKATOR_TIPA")) {
+            specifikatorTipa(prvo);
+            node.tip = prvo.tip;
+        } else if (prvo.value.equals("KR_CONST")) {
+            ASTNode drugo = node.children.get(1);
+            specifikatorTipa(drugo);
+            if (drugo.tip.equals("KR_VOID")) {   //sintaksno ispravno al besmisleno
+                terminal(prvo);
+
+                System.out.format("%s ::= KR_CONST(%d,%s) <specifikator_tipa>",
+                        node.value, prvo.appearance_line, prvo.name);
+                exit(1);
+            }
+
+            node.tip = toConsType(drugo.tip);
+        }
+    }
+
     private void inicijalizator (ASTNode node) {
         int size = node.children.size();
         ASTNode prvi = node.children.get(0);
@@ -307,6 +290,60 @@ public class SemantickiAnalizator {
         }
     }
 
+    /* ========== LISTE OVOGA I ONOGA ========== */
+
+    private void listaInitDeklaratora(ASTNode node) {
+        int size = node.children.size();
+        if (size == 1) {                            //prva produkcija
+            node.children.get(0).ntip = node.ntip;  //pise uz nasljedno svojstvo
+            initDeklarator(node.children.get(0));
+        } else if (size == 3) {                     //druga produkcija
+            ASTNode prvo = node.children.get(0);
+            ASTNode trece = node.children.get(2);
+
+            prvo.ntip = node.ntip;          //nasljedna svojstva
+            listaInitDeklaratora(prvo);
+
+            trece.ntip = node.ntip;
+            initDeklarator(trece);
+        } else {
+            Util.greska("listaInitDeklaratora");
+        }
+    }
+
+    private void listaDeklaracija(ASTNode node) {
+        int size = node.children.size();
+        ASTNode prvi = node.children.get(0);
+
+        if (size == 1 && prvi.value.equals("<deklaracija>")) {
+            deklaracija(prvi);
+        } else if (size == 2 && prvi.value.equals("<lista_deklaracija")) {
+            listaDeklaracija(prvi);
+            deklaracija(node.children.get(1));
+        } else {
+            Util.greska("listaDeklaracija");
+        }
+    }
+
+    private void listaArgumenata(ASTNode node) {
+        ASTNode prvi = node.children.get(0);
+
+        if (node.children.size() == 1 && prvi.value.equals("<izraz_pridruzivanja>")) {
+            izrazPridruzivanja(prvi);
+            node.tipovi.add(prvi.tip);
+        } else if (node.children.size() == 3 && prvi.value.equals("<lista_argumenata>")) {
+            listaArgumenata(prvi);
+            izrazPridruzivanja(node.children.get(2));
+
+            for (String s : prvi.tipovi) {
+                node.tipovi.add(s);
+            }
+            node.tipovi.add(node.children.get(2).tip);
+        } else {
+            Util.greska("listaArgumenata");
+        }
+    }
+
     private void listaIzrazaPridruzivanja (ASTNode node) {
         int size = node.children.size();
         ASTNode prvi = node.children.get(0);
@@ -331,6 +368,8 @@ public class SemantickiAnalizator {
             Util.greska("listaIzrazaPridruzivanja");
         }
     }
+
+    /* ========== IZRAZI OVI ONI ========== */
 
     private void izrazPridruzivanja (ASTNode node) {
         int size = node.children.size();
