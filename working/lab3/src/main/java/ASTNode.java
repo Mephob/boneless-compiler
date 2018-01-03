@@ -11,7 +11,7 @@ public class ASTNode {
 
     public String value;
     public String name;
-    public String names;        //koristi se u listama
+    public List<String> names;        //koristi se u listama
 
     public String tip;
     public String ntip;           //koristi se kod deklaracija nizova
@@ -27,6 +27,7 @@ public class ASTNode {
     public ASTNode() {
         children = new ArrayList<>();
         tipovi = new ArrayList<>();
+        names = new ArrayList<>();
         return;
     }
 
@@ -42,12 +43,5 @@ public class ASTNode {
         //neka greska u inputu
         Util.greska("extractFirstFromToken");
         return null;
-    }
-
-    //ispisuje stablo u inorderu radi kontrole
-    //ovo mozda u neki drugi razred nabiti
-    //nije trenutno pretjerano potrebno
-    public void printInorder() {
-        //todo
     }
 }

@@ -4,43 +4,20 @@
 	| NIZ_ZNAKOVA
 	| L_ZAGRADA <izraz> D_ZAGRADA
 
-<unarni_operator> ::= PLUS
-	| MINUS
-	| OP_TILDA
-	| OP_NEG
-
-<specifikator_tipa> ::= KR_VOID
-	| KR_CHAR
-	| KR_INT
-
-
-<izraz> ::= <izraz_pridruzivanja>
-	| <izraz> ZAREZ <izraz_pridruzivanja>
 <slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA
 	| L_VIT_ZAGRADA <lista_deklaracija> <lista_naredbi> D_VIT_ZAGRADA
-<lista_naredbi> ::= <naredba>
-	| <lista_naredbi> <naredba>
-<naredba> ::= <slozena_naredba>
-	| <izraz_naredba>
-	| <naredba_grananja>
-	| <naredba_petlje>
-	| <naredba_skoka>
-<izraz_naredba> ::= TOCKAZAREZ
-	| <izraz> TOCKAZAREZ
+
 <naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>
 	| KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba> KR_ELSE <naredba>
+
 <naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>
 	| KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA <naredba>
 	| KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA <naredba>
+
 <naredba_skoka> ::= KR_CONTINUE TOCKAZAREZ
 	| KR_BREAK TOCKAZAREZ
 	| KR_RETURN TOCKAZAREZ
 	| KR_RETURN <izraz> TOCKAZAREZ
-
-<lista_parametara> ::= <deklaracija_parametra>
-	| <lista_parametara> ZAREZ <deklaracija_parametra>
-<deklaracija_parametra> ::= <ime_tipa> IDN
-	| <ime_tipa> IDN L_UGL_ZAGRADA D_UGL_ZAGRADA
 
 <izravni_deklarator> ::= IDN
 	| IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA
