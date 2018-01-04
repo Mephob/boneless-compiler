@@ -37,8 +37,8 @@ public class ASTNode {
     public String extractFirstFromToken() {
         String[] headSplitter = this.value.split(" ");
 
-        if (headSplitter.length == 1) return headSplitter[0];   //nezavrsni znak
-        if (headSplitter.length == 3) return headSplitter[0];   //splitan je token
+        if (headSplitter.length == 1) return headSplitter[0].trim();   //nezavrsni znak
+        if (headSplitter.length == 3) return headSplitter[0].trim();   //splitan je token
 
         //neka greska u inputu
         Util.greska("extractFirstFromToken");

@@ -1,9 +1,3 @@
-<primarni_izraz> ::= IDN
-	| BROJ
-	| ZNAK
-	| NIZ_ZNAKOVA
-	| L_ZAGRADA <izraz> D_ZAGRADA
-
 <slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA
 	| L_VIT_ZAGRADA <lista_deklaracija> <lista_naredbi> D_VIT_ZAGRADA
 
