@@ -1,10 +1,6 @@
-import jdk.internal.util.xml.impl.Input;
-
-import java.io.InputStream;
 import java.util.*;
 
 import static java.lang.System.exit;
-import static java.lang.System.lineSeparator;
 
 /*
     Tijelo semantickog analizatora. Generira stablo iz inputa.
