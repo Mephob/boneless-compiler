@@ -196,7 +196,7 @@ public class SemantickiAnalizator {
 			tablicaDefFunkcija.addElem(drugi.name, drugi);  //mozda referenca na neki drugi cvor potrebna? nisam siguran
 			deklariraneFunkcije.addElem(drugi.name, drugi);
 
-			slozenaNaredba(node.children.get(4), null);
+			slozenaNaredba(node.children.get(5), null);
 		} else if (size == 6 && treci.value.equals("<lista_parametara>")) {
 			ASTNode listaPar = treci;
 			ASTNode sloNar = node.children.get(5);
@@ -396,10 +396,10 @@ public class SemantickiAnalizator {
 			boolean greska = false;
 
 			terminal(drugi);
-			terminal(treci);
 			terminal(cetvrti);
 
 			if (drugi.tip.equals("L_UGL_ZAGRADA")) {
+				terminal(treci);
 				if (node.ntip.equals("KR_VOID") || tablicaZnakova.hasElemLocally(prvi.name)) {
 					bigGreska(node);
 				}

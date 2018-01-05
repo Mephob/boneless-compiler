@@ -51,6 +51,7 @@ public class TablicaZnakova {
             lista = new ArrayList<>();
         }
         lista.add(initNode);
+        listMap.put(s, lista);
     }
 
     /*
