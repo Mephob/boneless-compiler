@@ -1295,6 +1295,79 @@ public class SemantickiAnalizator {
         }
     }
 
+    private void naredbaSkoka(ASTNode node) {
+        ASTNode prvi = node.children.get(0);
+        ASTNode drugi = node.children.get(1);
+        terminal(prvi);
+        terminal(drugi);
+
+        if(prvi.tip.equals("KR_CONTINUE") || prvi.tip.equals("KR_BREAK")) {
+            ASTNode buff = node.parent;
+            while (!buff.value.equals("<naredba_petlje>")) {
+                buff = buff.parent;
+
+                if (buff.depth == 0) {
+                    //TODO
+                    System.out.printf("<naredba_skoka> ::= (KR_CONTINUE(%d, %s) | KR_BREAK(%d, %s)) TOCKAZAREZ(%d, %s)",
+                              prvi.line, prvi.name, prvi.line, prvi.name, drugi.line, drugi.name);
+                    exit(1);
+                }
+            }
+
+            if (!drugi.tip.equals("TOCKAZAREZ")) {
+                //TODO
+                System.out.printf("<naredba_skoka> ::= (KR_CONTINUE(%d, %s) | KR_BREAK(%d, %s)) TOCKAZAREZ(%d, %s)",
+                          prvi.line, prvi.name, prvi.line, prvi.name, drugi.line, drugi.name);
+                exit(1);
+            }
+        } else if (prvi.tip.equals("KR_RETURN") && node.children.size() == 2) {
+            ASTNode buff = node.parent;
+            while (!buff.value.equals("<definicija funkcije>")) {
+                buff = buff.parent;
+
+                if (buff.depth == 0) {
+                    //TODO
+                    System.out.printf("<naredba_skoka> ::= KR_RETURN(%d, %s) TOCKAZAREZ(%d, %s)",
+                              prvi.line, prvi.name, drugi.line, drugi.name);
+                    exit(1);
+                }
+            }
+
+            if (!drugi.tip.equals("TOCKAZAREZ")) {
+                //TODO
+                System.out.printf("<naredba_skoka> ::= KR_RETURN(%d, %s) TOCKAZAREZ(%d, %s)",
+                          prvi.line, prvi.name, drugi.line, drugi.name);
+                exit(1);
+            }
+        } else if (prvi.tip.equals("KR_RETURN") && node.children.size() == 3) {
+            ASTNode treci = node.children.get(2);
+            terminal(treci);
+
+            ASTNode buff = node.parent;
+            while (!buff.value.equals("<definicija funkcije>")) {
+                buff = buff.parent;
+
+                if (buff.depth == 0) {
+                    //TODO
+                    System.out.printf("<naredba_skoka> ::= KR_RETURN(%d, %s) <izraz>(%d, %s) TOCKAZAREZ(%d, %s)",
+                              prvi.line, prvi.name, drugi.line, drugi.name, treci.line, treci.name);
+                    exit(1);
+                }
+            }
+
+            izraz(drugi);
+
+            if (!treci.tip.equals("TOCKAZAREZ")) {
+                //TODO
+                System.out.printf("<naredba_skoka> ::= KR_RETURN(%d, %s) <izraz>(%d, %s) TOCKAZAREZ(%d, %s)",
+                          prvi.line, prvi.name, drugi.line, drugi.name, treci.line, treci.name);
+                exit(1);
+            }
+        } else {
+            Util.greska("naredbaSkoka");
+        }
+    }
+
     /* ========== MISCELLANEOUS ========== */
 
         /*
