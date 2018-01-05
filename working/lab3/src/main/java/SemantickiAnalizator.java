@@ -18,11 +18,10 @@ import static java.lang.System.exit;
 
  */
 public class SemantickiAnalizator {
-    private TablicaZnakova tabZnak;
-    private Stack<Integer> stack;       //drzi duljinu nizova
-    private HashMap<String, String> definirane_funkcije; //valjda String string?
-    private HashMap<String, String> spomenute_funkcije; //radi provjere na kraju
-                        // jesu li sve spomenute funkcije definirane
+    private TablicaZnakova tablicaZnakova;
+    private Stack<Integer> arrLenStack;                     //drzi duljinu nizova
+    private TablicaZnakova tablicaDefFunkcija;
+    private List<String> deklariraneFunkcije;
     private ASTNode root;
 
 
@@ -37,10 +36,10 @@ public class SemantickiAnalizator {
     //GOTOVO
     private SemantickiAnalizator() {
         this.buildTree();
-        tabZnak = new TablicaZnakova();
-        stack = new Stack<>();
-        definirane_funkcije = new HashMap<>();
-        spomenute_funkcije = new HashMap<>();
+        tablicaZnakova = new TablicaZnakova();
+        arrLenStack = new Stack<>();
+        tablicaDefFunkcija = new TablicaZnakova();
+        deklariraneFunkcije = new LinkedList<>();
     }
 
     //GOTOVO
@@ -109,7 +108,7 @@ public class SemantickiAnalizator {
         //value je neki token
         String[] stuff = node.value.split(" ");
         node.tip = stuff[0].trim();
-        node.appearance_line = Integer.parseInt(stuff[1].trim());
+        node.line = Integer.parseInt(stuff[1].trim());
         node.name = stuff[2].trim();
     }
 
@@ -186,7 +185,7 @@ public class SemantickiAnalizator {
         if (prvi.tip.equals("KR_VOID")) {
             if (size == 2) {
                 System.out.printf("%s ::= %s IDN(%d,%s)",
-                        node.value, prvi.value, drugi.appearance_line, drugi.name);
+                        node.value, prvi.value, drugi.line, drugi.name);
             } else {
                 ASTNode treci = node.children.get(2);
                 terminal(treci);
@@ -194,8 +193,8 @@ public class SemantickiAnalizator {
                 terminal(cet);
 
                 System.out.printf("%s ::= %s IDN(%d,%s) L_UGL_ZAGRADA(%d,%s) D_UGL_ZAGRADA(%d,%s)",
-                        node.value, prvi.value, drugi.appearance_line, drugi.name,
-                        treci.appearance_line, treci.name, cet.appearance_line, cet.name);
+                        node.value, prvi.value, drugi.line, drugi.name,
+                        treci.line, treci.name, cet.line, cet.name);
             }
             exit(1);
         }
@@ -255,7 +254,7 @@ public class SemantickiAnalizator {
                 ASTNode eh = node.children.get(1);
                 terminal(eh);
                 System.out.printf("%s ::= %s OP_PRIDRUZI(%d,%s) %s",
-                        node.value, izrDekl.value, eh.appearance_line, eh.name, inic.value);
+                        node.value, izrDekl.value, eh.line, eh.name, inic.value);
                 exit(1);
             }
         } else {
@@ -269,15 +268,39 @@ public class SemantickiAnalizator {
 	            | IDN L_ZAGRADA KR_VOID D_ZAGRADA
 	            | IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
 
-	    //todo ovo ima djelokruge, to prokljuviti kasnije ali danas...
+	    //todo djelokrug kenser
      */
     private void izravniDeklarator(ASTNode node) {
         int size = node.children.size();
+        ASTNode prvi = node.children.get(0);
+        terminal(prvi);
+
         if (size == 1) {
-            if (node.ntip.equals("KR_VOID")) {
-                //todo ispis greske
+            if (node.ntip.equals("KR_VOID") || tablicaZnakova.hasElemLocally(prvi.name)) {
+                System.out.printf("<izravni_deklarator> ::= IDN(%d,%s)",
+                        prvi.line, prvi.name);
+                exit(1);
             }
             node.tip = node.ntip;
+            node.l_izraz = true;
+            if (toConsType(node.tip).equals(node.tip)) node.l_izraz = false;
+            tablicaZnakova.addElem(prvi.name, prvi);
+        } else {                //IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
+            ASTNode treci = node.children.get(2);
+            if (treci.value.equals("<lista_parametara>")) {
+                listaParametara(treci);
+                listCopyPasta(treci.tipovi, node.tipovi);
+                node.tipovi.add(node.ntip);
+
+                if (tablicaZnakova.hasElemLocally(prvi.name)) {
+                    if (!sameTypeLists(node.tipovi, treci.tipovi)) {
+                        System.out.printf("Dodaj ovdje output");
+                        exit(1);
+                    }
+                }
+                //todo
+                //ovo mi nije jasno uopce...
+            }
         }
     }
 
@@ -295,7 +318,7 @@ public class SemantickiAnalizator {
                 terminal(prvo);
 
                 System.out.format("%s ::= KR_CONST(%d,%s) <specifikator_tipa>",
-                        node.value, prvo.appearance_line, prvo.name);
+                        node.value, prvo.line, prvo.name);
                 exit(1);
             }
 
@@ -312,10 +335,10 @@ public class SemantickiAnalizator {
         if (size == 1 && prvi.value.equals("<izraz_pridruzivanja")) {   //prva produkcija
             izrazPridruzivanja(prvi);
             if (prvi.tip.equals("NIZ_ZNAKOVA") || prvi.tip.equals("NIZ_CONST_ZNAKOVA")) {
-                if (stack.size() == 0) {
+                if (arrLenStack.size() == 0) {
                     node.broj_elem = 0;
                 } else {
-                    node.broj_elem = stack.pop() + 1;
+                    node.broj_elem = arrLenStack.pop() + 1;
                 }
 
                 List<String> tipovi = node.tipovi;
@@ -440,7 +463,7 @@ public class SemantickiAnalizator {
                     ASTNode srednji = node.children.get(1);
                     terminal(srednji);
                     System.out.printf("%s ::= %s ZAREZ(%d,%s) %s",
-                            node.value, prvi.value, srednji.appearance_line,
+                            node.value, prvi.value, srednji.line,
                             srednji.name, treci.value);
                     exit(1);
                 }
@@ -467,13 +490,7 @@ public class SemantickiAnalizator {
 
     /* ========== IZRAZI OVI ONI ========== */
 
-    /*
-    <primarni_izraz> ::= IDN
-	        | BROJ
-	        | ZNAK
-	        | NIZ_ZNAKOVA
-	        | L_ZAGRADA <izraz> D_ZAGRADA
-     */
+    //GOTOVO trebalo bi ok bit, nadam se da ce radit...
     private void primarniIzraz(ASTNode node) {
         int size = node.children.size();
         if (size == 3) {
@@ -488,12 +505,12 @@ public class SemantickiAnalizator {
         ASTNode singleton = node.children.get(0);
         String[] tokenSplitter = singleton.value.split(" ");            //npr IDN 27 printf
         String value = tokenSplitter[0].trim();
-        String line = tokenSplitter[1].trim();
+        int line = Integer.parseInt(tokenSplitter[1].trim());
         String name = tokenSplitter[2].trim();
         boolean greska = false;
 
         singleton.tip = value;
-        singleton.appearance_line = Integer.parseInt(line);
+        singleton.line = line;
         singleton.name = name;
 
         if (value.equals("NIZ_ZNAKOVA")) {                  //npr NIZ_ZNAKOVA 27 "printf\n"
@@ -502,7 +519,7 @@ public class SemantickiAnalizator {
             if (charrayIsOkay(name) == false) {
                 greska = true;
             } else {
-                stack.push(arrayLength(name));
+                arrLenStack.push(arrayLength(name));
             }
         } else if (value.equals("ZNAK")) {
             node.tip = "KR_CHAR";
@@ -516,8 +533,25 @@ public class SemantickiAnalizator {
             if (brojIsOkay(name) == false) {
                 greska = true;
             }
-        } else if (value.equals("IDN")) {                 //fun fun fun
-            //todo ovo je shieeet... zasad cu ostavit prazno pa probat skombat kasnije
+        } else if (value.equals("IDN")) {
+            if (!tablicaZnakova.hasElem(name) && !tablicaDefFunkcija.hasElem(name)) {   //ne postoji nikakav IDN u scopeu
+                System.out.printf("<primarni_izraz> ::= IDN(%d,%s)", line, name);
+                exit(1);
+            }
+            if (tablicaZnakova.hasElem(name)) {             //postoji neki var
+                ASTNode spawn = tablicaZnakova.getIDN(name);
+                if (spawn.tipovi.size() == 0) {
+                    node.tip = spawn.tip;
+                    node.l_izraz = spawn.l_izraz;
+                } else {
+                    listCopyPasta(spawn.tipovi, node.tipovi);
+                    node.l_izraz = false;
+                }
+            }
+            if (tablicaDefFunkcija.hasElem(name)) {         //postoji neka funkcija
+                node.tip = tablicaDefFunkcija.getIDN(name).tip;
+                node.l_izraz = false;
+            }
         } else Util.greska("primarniIzraz 2");
 
         if (greska) {
@@ -547,6 +581,106 @@ public class SemantickiAnalizator {
         }
     }
 
+    //GOTOVO uz todo napomene, ovo provjeriti pls
+    private void postfiksIzraz(ASTNode node) {
+        int size = node.children.size();
+        ASTNode prvi = node.children.get(0);
+
+        if (size < 1 || size > 4) Util.greska("postfiksIzraz 1");
+
+        if (size == 1 && prvi.value.equals("<primarni_izraz>")) {
+            primarniIzraz(prvi);
+            node.tip = prvi.tip;
+            node.l_izraz = prvi.l_izraz;
+
+        } else if (size == 2 && prvi.value.equals("<postfiks_izraz>")) {
+            postfiksIzraz(prvi);
+            if (!prvi.l_izraz || !isImplicitlyCastable(prvi.tip, "KR_INT")) {
+                ASTNode drugi = node.children.get(1);
+                terminal(drugi);
+
+                System.out.printf("%s ::= %s %s(%d, %s)",
+                        node.value, prvi.value, drugi.tip, drugi.line, drugi.name);
+                exit(1);
+            } else {
+                node.tip = "KR_INT";
+                node.l_izraz = false;
+            }
+        } else if (size == 3 && prvi.value.equals("<postfiks_izraz>")) {
+            postfiksIzraz(prvi);
+
+            //cudno nes, ugl molim peruna da su ovi svi uvjeti dovoljni, tu se gleda jel povratna
+            //funkcije void, ak ne onda je greska
+            if (prvi.tipovi.size() == 0 || !prvi.tipovi.get(0).equals("KR_VOID")) {
+                ASTNode drugi = node.children.get(1);
+                terminal(drugi);
+                ASTNode treci = node.children.get(2);
+                terminal(treci);
+
+                System.out.printf("%s ::= %s %s(%d,%s) %s(%d, %s)",
+                        node.value, prvi.value, drugi.tip, drugi.line, drugi.name,
+                        treci.tip, treci.line, treci.name);
+                exit(1);
+            }
+            node.tip = "KR_VOID";
+            node.l_izraz = false;
+
+        } else if (node.children.get(2).value.equals("<izraz>")) {
+            String tipX = findingXemo(prvi.tip);        //trazimo kojeg tipa je niz
+            ASTNode treci = node.children.get(2);
+            postfiksIzraz(prvi);
+            izraz(treci);
+
+            if (tipX.equals("GRESKA findingXemo") || isImplicitlyCastable(treci.tip, "KR_INT")) {    //greska
+                ASTNode op1 = node.children.get(1);
+                ASTNode op2 = node.children.get(2);
+                terminal(op1);
+                terminal(op2);
+                System.out.printf("%s ::= %s %s(%d,%s) %s %s(%d,%s)",
+                        node.value, prvi.value, op1.tip, op1.line, op1.name,
+                        treci.value, op2.tip, op2.line, op2.name);
+                exit(1);
+            }
+            node.tip = tipX;
+            node.l_izraz = tipX.equals(toConsType(tipX));
+
+        } else if (node.children.get(2).value.equals("<lista_argumenata>")) {
+            ASTNode treci = node.children.get(2);
+            postfiksIzraz(prvi);
+            listaArgumenata(treci);
+            boolean greska = false;
+
+            String[] tipovi = prvi.tipovi.toArray(new String[0]);
+            String[] argumentiFunkcije = treci.tipovi.toArray(new String[0]);
+            //todo mozda dodaj if tipovi.length != 2 ako ovo ne radi
+            if (tipovi.length == 0 || tipovi.length != argumentiFunkcije.length) {
+                greska = true;
+            }
+
+            for (int i = 0, len = tipovi.length; i < len; i++) {
+                if (greska) break;
+                if (!isImplicitlyCastable(argumentiFunkcije[i], tipovi[i])) {
+                    greska = true;
+                    break;
+                }
+            }
+            if (greska) {
+                ASTNode op1 = node.children.get(1);
+                ASTNode op2 = node.children.get(2);
+                terminal(op1);
+                terminal(op2);
+                System.out.printf("%s ::= %s %s(%d,%s) %s %s(%d,%s)",
+                        node.value, prvi.value, op1.tip, op1.line, op1.name,
+                        treci.value, op2.tip, op2.line, op2.name);
+                exit(1);
+            }
+            node.tip = tipovi[0];       //todo ako ne radi probaj tipovi[1]
+            node.l_izraz = false;
+        } else {
+            Util.greska("postfiksIzraz 2");
+        }
+    }
+
     //GOTOVO
     private void izrazPridruzivanja (ASTNode node) {
         int size = node.children.size();
@@ -562,12 +696,12 @@ public class SemantickiAnalizator {
 
             postfiksIzraz(prvi);
 
-            if (prvi.l_izraz == false) {
+            if (!prvi.l_izraz) {
                 ASTNode drugi = node.children.get(1);
                 terminal(drugi);
 
                 System.out.printf("%s ::= %s OP_PRIDRUZI(%d,%s) %s",
-                        node.value, drugi.appearance_line, drugi.name, treci.value);
+                        node.value, prvi.value, drugi.line, drugi.name, treci.value);
             }
             node.tip = prvi.tip;
             izrazPridruzivanja(treci);
@@ -577,7 +711,7 @@ public class SemantickiAnalizator {
                 terminal(drugi);
 
                 System.out.printf("%s ::= %s OP_PRIDRUZI(%d,%s) %s",
-                        node.value, drugi.appearance_line, drugi.name, treci.value);
+                        node.value, prvi.value, drugi.line, drugi.name, treci.value);
                 exit(1);
             }
         } else {
@@ -617,7 +751,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s OP_ILI(%d,%s) %s",
-                        node.value, prvi.value, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
 
@@ -656,7 +790,7 @@ public class SemantickiAnalizator {
                     terminal(srednji);
 
                     System.out.printf("%s ::= %s OP_I(%d,%s) %s",
-                            node.value, prvi.value, srednji.appearance_line, srednji.name, treci.value);
+                            node.value, prvi.value, srednji.line, srednji.name, treci.value);
                     exit(1);
                 }
             } else {
@@ -695,7 +829,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s OP_BIN_ILI(%d,%s) %s",
-                        node.value, prvi.value, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
 
@@ -734,7 +868,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s OP_BIN_XILI(%d,%s) %s",
-                        node.value, prvi.value, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
 
@@ -773,7 +907,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s OP_BIN_I(%d,%s) %s",
-                        node.value, prvi.value, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
         } else {
@@ -811,7 +945,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s %s(%d,%s) %s",
-                        node.value, prvi.value, srednji.tip, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.tip, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
         } else {
@@ -849,7 +983,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s %s(%d,%s) %s",
-                        node.value, prvi.value, srednji.tip, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.tip, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
         } else {
@@ -887,7 +1021,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s %s(%d,%s) %s",
-                        node.value, prvi.value, srednji.tip, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.tip, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
         } else {
@@ -925,7 +1059,7 @@ public class SemantickiAnalizator {
                 terminal(srednji);
 
                 System.out.printf("%s ::= %s %s(%d,%s) %s",
-                        node.value, prvi.value, srednji.tip, srednji.appearance_line, srednji.name, treci.value);
+                        node.value, prvi.value, srednji.tip, srednji.line, srednji.name, treci.value);
                 exit(1);
             }
         } else {
@@ -976,8 +1110,8 @@ public class SemantickiAnalizator {
                 terminal(desna);
 
                 System.out.printf("%s ::= %s(%d,%s) %s %s(%d,%s) %s",
-                        node.value, lijeva.tip, lijeva.appearance_line, lijeva.name,
-                        drugi.value, desna.tip, desna.appearance_line, desna.name, zadnji.value);
+                        node.value, lijeva.tip, lijeva.line, lijeva.name,
+                        drugi.value, desna.tip, desna.line, desna.name, zadnji.value);
                 exit(1);
             }
         } else {
@@ -1022,7 +1156,7 @@ public class SemantickiAnalizator {
                 //prvi je operator
                 terminal(prvi);
                 System.out.printf("%s ::= %s(%d,%s) %s",
-                        node.value, prvi.tip, prvi.appearance_line, prvi.name, drugi.value);
+                        node.value, prvi.tip, prvi.line, prvi.name, drugi.value);
                 exit(1);
             }
         } else {
@@ -1044,17 +1178,6 @@ public class SemantickiAnalizator {
             Util.greska("izrazNaredba");
         }
     }
-    /*
-    <postfiks_izraz> ::= <primarni_izraz>
-	        | <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA
-	        | <postfiks_izraz> L_ZAGRADA D_ZAGRADA
-	        | <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA
-	        | <postfiks_izraz> OP_INC
-	        | <postfiks_izraz> OP_DEC
-     */
-    private void postfiksIzraz(ASTNode node) {
-
-    }
 
     /* ========== NAREDBE NAREDNICI VODNICI PORUCNICI ========== */
 
@@ -1070,6 +1193,106 @@ public class SemantickiAnalizator {
         else if (jedinac.value.equals("<naredba_petlje>")) naredbaPetlje(jedinac);
         else if (jedinac.value.equals("<naredba_skoka>")) naredbaSkoka(jedinac);
         else Util.greska("naredba");
+    }
+
+    //GOTOVO
+    private void naredbaGrananja(ASTNode node) {
+        int size = node.children.size();
+        boolean greska = false;
+
+        if (size == 5) {
+            izraz(node.children.get(2));
+            if (!isImplicitlyCastable(node.children.get(2).tip, "KR_INT")) {
+                ASTNode jen = node.children.get(0);
+                ASTNode dva = node.children.get(1);
+                ASTNode tri = node.children.get(2);
+                ASTNode cet = node.children.get(3);
+                ASTNode pet = node.children.get(4);
+                terminal(jen); terminal(dva); terminal(cet);
+
+                System.out.printf("%s ::= KR_IF(%d,%s) L_ZAGRADA(%d,%s) %s D_ZAGRADA(%d, %s) %s",
+                        node.value, jen.line, jen.name, dva.line, dva.name,
+                        tri.value, cet.line, cet.name, pet.value);
+                exit(1);
+            }
+            naredba(node.children.get(4));
+        } else if (size == 7) {
+            izraz(node.children.get(2));
+
+            if (!isImplicitlyCastable(node.children.get(2).tip, "KR_INT")) {
+                ASTNode jen = node.children.get(0);
+                ASTNode dva = node.children.get(1);
+                ASTNode cet = node.children.get(3);
+                ASTNode pet = node.children.get(5);
+                terminal(jen); terminal(dva); terminal(cet); terminal(pet);
+
+                System.out.printf("<naredba_grananja> ::= KR_IF(%d,%s) L_ZAGRADA(%d,%s) <izraz> " +
+                                "D_ZAGRADA(%d,%s) <naredba> KR_ELSE(%d,%s) <naredba>",
+                        jen.line, jen.name, dva.line, dva.name,
+                        cet.line, cet.name, pet.line, pet.name);
+                exit(1);
+            }
+            naredba(node.children.get(4));
+            naredba(node.children.get(6));
+        } else {
+            Util.greska("naredbaGrananja");
+        }
+    }
+
+    //GOTOVO
+    private void naredbaPetlje(ASTNode node) {
+        int size = node.children.size();
+
+        if (size == 5) {
+            izraz(node.children.get(2));
+            if (!isImplicitlyCastable(node.children.get(2).tip, "KR_INT")) {
+                ASTNode jen = node.children.get(0); terminal(jen);
+                ASTNode dva = node.children.get(1); terminal(dva);
+                ASTNode tri = node.children.get(3); terminal(tri);
+
+                System.out.printf("<naredba_petlje> ::= KR_WHILE(%d,%s) " +
+                        "L_ZAGRADA(%d,%s) <izraz> D_ZAGRADA(%d,%s) <naredba>",
+                        jen.line, jen.name, dva.line, dva.name, tri.line, tri.name);
+                exit(1);
+            }
+            naredba(node.children.get(4));
+        } else if (size == 6) {
+            izrazNaredba(node.children.get(2));
+            izrazNaredba(node.children.get(3));
+
+            if (!isImplicitlyCastable(node.children.get(3).tip, "KR_INT")) {
+                ASTNode jen = node.children.get(0); terminal(jen);
+                ASTNode dva = node.children.get(1); terminal(dva);
+                ASTNode cet = node.children.get(3); terminal(cet);
+
+                System.out.printf("<naredba_petlje> ::= KR_FOR(%d,%s) L_ZAGRADA(%d,%s) " +
+                        "<izraz_naredba> <izraz_naredba> D_ZAGRADA(%d,%s) <naredba>",
+                        jen.line, jen.name, dva.line, dva.name, cet.line, cet.name);
+                exit(1);
+            }
+            naredba(node.children.get(5));
+        } else if (size == 7) {
+            izrazNaredba(node.children.get(2));
+            izrazNaredba(node.children.get(3));
+
+            if (!isImplicitlyCastable(node.children.get(3).tip, "KR_INT")) {
+                ASTNode jen = node.children.get(0);
+                terminal(jen);
+                ASTNode dva = node.children.get(1);
+                terminal(dva);
+                ASTNode ses = node.children.get(5);
+                terminal(ses);
+
+                System.out.printf("<naredba_petlje> ::= KR_FOR(%d,%s) L_ZAGRADA(%d,%s) " +
+                        "<izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA(%d,%s) <naredba>",
+                        jen.line, jen.name, dva.line, dva.name, ses.line, ses.name);
+                exit(1);
+            }
+            izraz(node.children.get(4));
+            naredba(node.children.get(6));
+        } else {
+            Util.greska("naredbaPetlje");
+        }
     }
 
     /* ========== MISCELLANEOUS ========== */
@@ -1109,6 +1332,14 @@ public class SemantickiAnalizator {
         if (type.equals("KR_CHAR")) return "NIZ_ZNAKOVA";
         if (type.equals("KR_CONST_CHAR")) return "NIZ_CONST_ZNAKOVA";
         return "GRESKA toArrayType";
+    }
+
+    private static String findingXemo(String niz) {
+        if (niz.equals("NIZ_BROJEVA")) return "KR_INT";
+        if (niz.equals("NIZ_CONST_BROJEVA")) return "KR_CONST_INT";
+        if (niz.equals("NIZ_ZNAKOVA")) return "KR_CHAR";
+        if (niz.equals("NIZ_CONST_ZNAKOVA")) return "KR_CONST_CHAR";
+        return "GRESKA findingXemo";
     }
 
     private static boolean isTypeT(String type) {

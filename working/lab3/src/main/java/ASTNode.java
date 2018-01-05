@@ -19,7 +19,7 @@ public class ASTNode {
     public List<String> tipovi;
 
     public int broj_elem;
-    public int appearance_line; //za ispis pogreske
+    public int line; //za ispis pogreske
 
     /*
     Konstruktor
@@ -43,5 +43,11 @@ public class ASTNode {
         //neka greska u inputu
         Util.greska("extractFirstFromToken");
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        //samo reference gledam jer sam lijen pisat ostalo, valjda ce radit...
+        return this == o;
     }
 }
