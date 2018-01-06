@@ -5,7 +5,9 @@ import java.util.Scanner;
 public class SemantickiAnalizator {
 
 	public static void main(String[] args) {
-		realMain(System.in, System.out);
+		//int x = (int) 2.4e20;
+		System.out.println(Integer.parseInt("5471657469788"));
+		//realMain(System.in, System.out);
 	}
 
 	private static void realMain(InputStream in, OutputStream out) {
@@ -13,7 +15,6 @@ public class SemantickiAnalizator {
 
 		while (sc.hasNext()) {
 			String line = sc.nextLine();
-
 			//TODO dodaj tam gdje treba
 		}
 

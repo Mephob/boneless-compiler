@@ -20,6 +20,6 @@ public abstract class NezavrsniZnak extends Node {
 	}
 
 	public List<Node> getChildren() {
-		return children
+		return children;
 	}
 }
