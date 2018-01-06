@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
     /*
     Malo me zeza jedino ovdje kaj se dogodi ako roknemo vise identifikatora istog naziva u vise scopeova
@@ -54,6 +51,7 @@ public class TablicaZnakova {
             lista = new ArrayList<>();
         }
         lista.add(initNode);
+        listMap.put(s, lista);
     }
 
     /*
@@ -127,5 +125,13 @@ public class TablicaZnakova {
             stek.push(tempboi.pop());
         }
         return closest;
+    }
+
+    public List<ASTNode> getNodeList(String s) {
+        return listMap.get(s);
+    }
+
+    public Set<String> getKeys() {
+        return listMap.keySet();
     }
 }
