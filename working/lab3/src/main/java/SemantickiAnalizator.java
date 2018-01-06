@@ -278,15 +278,95 @@ public class SemantickiAnalizator {
         if (size == 1) {
             if (node.ntip.equals("KR_VOID") || tablicaZnakova.hasElemLocally(prvi.name)) {
                 System.out.printf("<izravni_deklarator> ::= IDN(%d,%s)",
-                        prvi.line, prvi.name);
+                          prvi.line, prvi.name);
                 exit(1);
             }
             node.tip = node.ntip;
             node.l_izraz = true;
             if (toConsType(node.tip).equals(node.tip)) node.l_izraz = false;
             tablicaZnakova.addElem(prvi.name, prvi);
-        } else {                //IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
+        } else if (node.children.size() == 4) {
+            ASTNode drugi = node.children.get(1);
             ASTNode treci = node.children.get(2);
+            ASTNode cetvrti = node.children.get(3);
+
+            terminal(drugi);
+            terminal(treci);
+            terminal(cetvrti);
+
+            if (drugi.tip.equals("L_UGL_ZAGRADA")) {
+                if (node.ntip.equals("KR_VOID") || tablicaZnakova.hasElemLocally(prvi.name)) {
+                    //TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    System.out.printf("izravni_deklarator> ::= IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA",
+                        prvi.line, prvi.name);
+                    exit(1);
+                }
+
+                //provijeri je li zavrsni i ako je onda je li BROJ
+                if (treci.value.startsWith("<") && treci.value.endsWith(">")) {
+                    //TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    System.out.printf("izravni_deklarator> ::= IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA",
+                              prvi.line, prvi.name);
+                    exit(1);
+                } else {
+                    terminal(treci);
+
+                    if (!treci.tip.equals("BROJ")) {
+                        //TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        System.out.printf("izravni_deklarator> ::= IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA",
+                                  prvi.line, prvi.name);
+                        exit(1);
+                    }
+                }
+
+                int intBuff = Integer.parseInt(treci.name);
+                if (intBuff <= 0 || intBuff > 1024) {
+                    //TODO<same shit as above<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    System.out.printf("izravni_deklarator> ::= IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA",
+                              prvi.line, prvi.name);
+                    exit(1);
+                }
+
+                node.tip = node.ntip;//todo <<<<<<<<<<<<<<<<????? to ovak ili
+                //TODO dodati broj elemenata PROVIJERI
+                node.broj_elem = intBuff;
+
+                //TODO<ne znam da li ovo ispod tu treba, neki kurac da arrays nisu konst ali oni unutra jesu<
+                node.l_izraz = true;
+                if (toConsType(node.tip).equals(node.tip)) node.l_izraz = false;
+                tablicaZnakova.addElem(prvi.name, prvi);
+                //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            } else if (drugi.tip.equals("L_ZAGRADA")) {
+                if (treci.value.startsWith("<") && treci.value.endsWith(">")) {
+                    if (!treci.value.equals("<lista_parametara>")) {
+                        //TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        System.out.printf("<izravni_deklarator> ::= IDN L_ZAGRADA <lista_parametara> D_ZAGRADA",
+                                  prvi.line, prvi.name);
+                        exit(1);
+                    }
+
+                    listaParametara(treci);
+
+                    //TODO provijere  i pridruzivanje
+                } else {
+                    terminal(treci);
+
+                    if (!treci.tip.equals("KR_VOID")) {
+                        //TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        System.out.printf("<izravni_deklarator> ::= IDN L_ZAGRADA KR_VOID D_ZAGRADA",
+                                  prvi.line, prvi.name);
+                        exit(1);
+                    }
+
+                    //TODO provijere i pridruzivanje
+                }
+            } else {
+                Util.greska("imeTipa");
+            }
+        } else {
+            Util.greska("imeTipa");
+            /*ASTNode treci = node.children.get(2);
+
             if (treci.value.equals("<lista_parametara>")) {
                 listaParametara(treci);
                 listCopyPasta(treci.tipovi, node.tipovi);
@@ -299,8 +379,7 @@ public class SemantickiAnalizator {
                     }
                 }
                 //todo
-                //ovo mi nije jasno uopce...
-            }
+                //ovo mi nije jasno uopce...*/
         }
     }
 
@@ -1367,6 +1446,7 @@ public class SemantickiAnalizator {
             Util.greska("naredbaSkoka");
         }
     }
+
 
     /* ========== MISCELLANEOUS ========== */
 
