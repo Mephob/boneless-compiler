@@ -1,6 +1,6 @@
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.util.Scanner;
 
 public class SemantickiAnalizator {
 
@@ -9,6 +9,15 @@ public class SemantickiAnalizator {
 	}
 
 	private static void realMain(InputStream in, OutputStream out) {
+		Scanner sc = new Scanner(in);
+
+		while (sc.hasNext()) {
+			String line = sc.nextLine();
+
+			//TODO dodaj tam gdje treba
+		}
+
+
 
 		//TODO obici stablo
 

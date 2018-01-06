@@ -1,2 +1,2 @@
-public class ListaIzrazaPridruzivanja extends Node {
+public class ListaIzrazaPridruzivanja extends NezavrsniZnak {
 }
