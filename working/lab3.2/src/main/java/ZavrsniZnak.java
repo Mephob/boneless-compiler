@@ -1,5 +1,3 @@
-import java.util.List;
-
 public abstract class ZavrsniZnak extends Node {
 
 
@@ -28,6 +26,11 @@ public abstract class ZavrsniZnak extends Node {
 	public void setValue(String value) {
 		this.value = value;
 	}
+
+	@Override
+	public String toString() {
+		return getName() + String.format("(%d,%s)", lineNumber, value);
+	}
 }
 
 //###########################################################################//
@@ -36,8 +39,8 @@ public abstract class ZavrsniZnak extends Node {
 
 class IDN extends ZavrsniZnak {
 
-	public IDN(String name, Node parent, int lineNumber, String value) {
-		super(name, parent, lineNumber, value);
+	public IDN(Node parent, int lineNumber, String value) {
+		super("IDN", parent, lineNumber, value);
 	}
 
 	public void acceptVisitor(NodeVisitor nv) {
@@ -48,8 +51,10 @@ class IDN extends ZavrsniZnak {
 //###########################################################################//
 class BROJ extends ZavrsniZnak {
 
-	public BROJ(String name, Node parent, int lineNumber, String value) {
-		super(name, parent, lineNumber, value);
+	private int intValue;
+
+	public BROJ(Node parent, int lineNumber, String value) {
+		super("BROJ", parent, lineNumber, value);
 
 		//baca exception ako je prevelik/mali za int(tak i treba)
 		//to radimo tu a ne u super tako da se name i lineNumber inicializiraju
@@ -60,13 +65,21 @@ class BROJ extends ZavrsniZnak {
 	public void acceptVisitor(NodeVisitor nv) {
 		nv.accept(this);
 	}
+
+	public int getIntValue() {
+		return intValue;
+	}
+
+	void setIntValue(int value) {
+		intValue = value;
+	}
 }
 
 //###########################################################################//
 class ZNAK extends ZavrsniZnak {
 
-	public ZNAK(String name, Node parent, int lineNumber, String value) {
-		super(name, parent, lineNumber, null);
+	public ZNAK(Node parent, int lineNumber, String value) {
+		super("ZNAK", parent, lineNumber, value);
 /*
 		if (value.startsWith("\\") && value.length() == 2) {
 			switch (value.charAt(1)) {
@@ -94,8 +107,8 @@ class ZNAK extends ZavrsniZnak {
 //###########################################################################//
 class NIZ_ZNAKOVA extends ZavrsniZnak {
 
-	public NIZ_ZNAKOVA(String name, Node parent, int lineNumber, String value) {
-		super(name, parent, lineNumber, value);
+	public NIZ_ZNAKOVA(Node parent, int lineNumber, String value) {
+		super("NIZ_ZNAKOVA", parent, lineNumber, value);
 	}
 
 	public void acceptVisitor(NodeVisitor nv) {
@@ -106,8 +119,8 @@ class NIZ_ZNAKOVA extends ZavrsniZnak {
 //###########################################################################//
 class KR_BREAK extends ZavrsniZnak {
 
-	public KR_BREAK(Node parent, int lineNumber) {
-		super("break", parent, lineNumber, "break");
+	public KR_BREAK(Node parent, int lineNumber, String value) {
+		super("KR_BREAK", parent, lineNumber, value);
 	}
 
 	public void acceptVisitor(NodeVisitor nv) {
@@ -116,118 +129,469 @@ class KR_BREAK extends ZavrsniZnak {
 }
 
 //###########################################################################//
-// KR_CHAR
+class KR_CHAR extends ZavrsniZnak {
+
+	public KR_CHAR(Node parent, int lineNumber, String value) {
+		super("KR_CHAR", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_CONST
+class KR_CONST extends ZavrsniZnak {
+
+	public KR_CONST(Node parent, int lineNumber, String value) {
+		super("KR_CONST", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_CONTINUE
+class KR_CONTINUE extends ZavrsniZnak {
+
+	public KR_CONTINUE(Node parent, int lineNumber, String value) {
+		super("KR_CONTINUE", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_ELSE
+class KR_ELSE extends ZavrsniZnak {
+
+	public KR_ELSE(Node parent, int lineNumber, String value) {
+		super("KR_ELSE", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_FOR
+class KR_FOR extends ZavrsniZnak {
+
+	public KR_FOR(Node parent, int lineNumber, String value) {
+		super("KR_FOR", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_IF
+class KR_IF extends ZavrsniZnak {
+
+	public KR_IF(Node parent, int lineNumber, String value) {
+		super("KR_IF", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_INT
+class KR_INT extends ZavrsniZnak {
+
+	public KR_INT(Node parent, int lineNumber, String value) {
+		super("KR_INT", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_RETURN
+class KR_RETURN extends ZavrsniZnak {
+
+	public KR_RETURN(Node parent, int lineNumber, String value) {
+		super("KR_RETURN", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_VOID
+class KR_VOID extends ZavrsniZnak {
+
+	public KR_VOID(Node parent, int lineNumber, String value) {
+		super("KR_VOID", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// KR_WHILE
+class KR_WHILE extends ZavrsniZnak {
+
+	public KR_WHILE(Node parent, int lineNumber, String value) {
+		super("KR_WHILE", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// PLUS
+class PLUS extends ZavrsniZnak {
+
+	public PLUS(Node parent, int lineNumber, String value) {
+		super("PLUS", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_INC
+class OP_INC extends ZavrsniZnak {
+
+	public OP_INC(Node parent, int lineNumber, String value) {
+		super("OP_INC", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// MINUS
+class MINUS extends ZavrsniZnak {
+
+	public MINUS(Node parent, int lineNumber, String value) {
+		super("MINUS", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_DEC
+class OP_DEC extends ZavrsniZnak {
+
+	public OP_DEC(Node parent, int lineNumber, String value) {
+		super("OP_DEC", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_PUTA
+class OP_PUTA extends ZavrsniZnak {
+
+	public OP_PUTA(Node parent, int lineNumber, String value) {
+		super("OP_PUTA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_DIJELI
+class OP_DIJELI extends ZavrsniZnak {
+
+	public OP_DIJELI(Node parent, int lineNumber, String value) {
+		super("OP_DIJELI", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_MOD
+class OP_MOD extends ZavrsniZnak {
+
+	public OP_MOD(Node parent, int lineNumber, String value) {
+		super("OP_MOD", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_PRIDRUZI
+class OP_PRIDRUZI extends ZavrsniZnak {
+
+	public OP_PRIDRUZI(Node parent, int lineNumber, String value) {
+		super("OP_PRIDRUZI", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_LT
+class OP_LT extends ZavrsniZnak {
+
+	public OP_LT(Node parent, int lineNumber, String value) {
+		super("OP_LT", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_LTE
+class OP_LTE extends ZavrsniZnak {
+
+	public OP_LTE(Node parent, int lineNumber, String value) {
+		super("OP_LTE", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_GT
+class OP_GT extends ZavrsniZnak {
+
+	public OP_GT(Node parent, int lineNumber, String value) {
+		super("OP_GT", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_GTE
+class OP_GTE extends ZavrsniZnak {
+
+	public OP_GTE(Node parent, int lineNumber, String value) {
+		super("OP_GTE", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_EQ
+class OP_EQ extends ZavrsniZnak {
+
+	public OP_EQ(Node parent, int lineNumber, String value) {
+		super("OP_EQ", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_NEQ
+class OP_NEQ extends ZavrsniZnak {
+
+	public OP_NEQ(Node parent, int lineNumber, String value) {
+		super("OP_NEQ", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_NEG
+class OP_NEG extends ZavrsniZnak {
+
+	public OP_NEG(Node parent, int lineNumber, String value) {
+		super("OP_NEG", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_TILDA
+class OP_TILDA extends ZavrsniZnak {
+
+	public OP_TILDA(Node parent, int lineNumber, String value) {
+		super("OP_TILDA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_I
+class OP_I extends ZavrsniZnak {
+
+	public OP_I(Node parent, int lineNumber, String value) {
+		super("OP_I", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_ILI
+class OP_ILI extends ZavrsniZnak {
+
+	public OP_ILI(Node parent, int lineNumber, String value) {
+		super("OP_ILI", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_BIN_I
+class OP_BIN_I extends ZavrsniZnak {
+
+	public OP_BIN_I(Node parent, int lineNumber, String value) {
+		super("OP_BIN_I", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_BIN_ILI
+class OP_BIN_ILI extends ZavrsniZnak {
+
+	public OP_BIN_ILI(Node parent, int lineNumber, String value) {
+		super("OP_BIN_ILI", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// OP_BIN_XILI
+class OP_BIN_XILI extends ZavrsniZnak {
+
+	public OP_BIN_XILI(Node parent, int lineNumber, String value) {
+		super("OP_BIN_XILI", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// ZAREZ
+class ZAREZ extends ZavrsniZnak {
+
+	public ZAREZ(Node parent, int lineNumber, String value) {
+		super("ZAREZ", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// TOCKAZAREZ
+class TOCKAZAREZ extends ZavrsniZnak {
+
+	public TOCKAZAREZ(Node parent, int lineNumber, String value) {
+		super("TOCKAZAREZ", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// L_ZAGRADA
+class L_ZAGRADA extends ZavrsniZnak {
+
+	public L_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("L_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// D_ZAGRADA
+class D_ZAGRADA extends ZavrsniZnak {
+
+	public D_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("D_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// L_UGL_ZAGRADA
+class L_UGL_ZAGRADA extends ZavrsniZnak {
+
+	public L_UGL_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("L_UGL_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// D_UGL_ZAGRADA
+class D_UGL_ZAGRADA extends ZavrsniZnak {
+
+	public D_UGL_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("D_UGL_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// L_VIT_ZAGRADA
+class L_VIT_ZAGRADA extends ZavrsniZnak {
+
+	public L_VIT_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("L_VIT_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}
 
 //###########################################################################//
-// D_VIT_ZAGRADA
+class D_VIT_ZAGRADA extends ZavrsniZnak {
+
+	public D_VIT_ZAGRADA(Node parent, int lineNumber, String value) {
+		super("D_VIT_ZAGRADA", parent, lineNumber, value);
+	}
+
+	public void acceptVisitor(NodeVisitor nv) {
+		nv.accept(this);
+	}
+}

@@ -6,12 +6,12 @@ public abstract class NezavrsniZnak extends Node {
 
 	protected List<Node> children;
 
-	protected NezavrsniZnak(String name) {
-		this(name, Collections.<Node>emptyList());
+	protected NezavrsniZnak(String name, Node parent) {
+		this(name, parent, Collections.<Node>emptyList());
 	}
 
-	protected NezavrsniZnak(String name,List<Node> children) {
-		super(name);
+	protected NezavrsniZnak(String name, Node parent,List<Node> children) {
+		super(name, parent);
 		this.children = new ArrayList<Node>(children);
 	}
 
