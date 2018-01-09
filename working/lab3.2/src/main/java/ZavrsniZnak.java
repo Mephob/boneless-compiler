@@ -55,11 +55,6 @@ class BROJ extends ZavrsniZnak {
 
 	public BROJ(Node parent, int lineNumber, String value) {
 		super("BROJ", parent, lineNumber, value);
-
-		//baca exception ako je prevelik/mali za int(tak i treba)
-		//to radimo tu a ne u super tako da se name i lineNumber inicializiraju
-		//setValue(Integer.parseInt(value));
-		//TODO prebacit u vizitor
 	}
 
 	public void acceptVisitor(NodeVisitor nv) {
@@ -78,34 +73,29 @@ class BROJ extends ZavrsniZnak {
 //###########################################################################//
 class ZNAK extends ZavrsniZnak {
 
+	private char charValue;
+
 	public ZNAK(Node parent, int lineNumber, String value) {
 		super("ZNAK", parent, lineNumber, value);
-/*
-		if (value.startsWith("\\") && value.length() == 2) {
-			switch (value.charAt(1)) {
-				case 't':setValue('\t');
-				case 'n':setValue('\n');
-				case '0':setValue('\0');
-				case '\'':setValue('\'');
-				case '\"':setValue('\"');
-				case '\\':setValue('\\');
-				default:
-					//todo trhow exception
-			}
-		} else if (value.length() == 1) {
-			setValue(value.charAt(0));
-		} else {
-			//TODO throw exception???
-		}*///TODO prebacit u visitor
 	}
 
 	public void acceptVisitor(NodeVisitor nv) {
 		nv.accept(this);
 	}
+
+	public char getCharValue() {
+		return charValue;
+	}
+
+	public void setCharValue(char charValue) {
+		this.charValue = charValue;
+	}
 }
 
 //###########################################################################//
 class NIZ_ZNAKOVA extends ZavrsniZnak {
+
+	private char[] characters;
 
 	public NIZ_ZNAKOVA(Node parent, int lineNumber, String value) {
 		super("NIZ_ZNAKOVA", parent, lineNumber, value);
@@ -113,6 +103,14 @@ class NIZ_ZNAKOVA extends ZavrsniZnak {
 
 	public void acceptVisitor(NodeVisitor nv) {
 		nv.accept(this);
+	}
+
+	public char[] getCharacters() {
+		return characters;
+	}
+
+	public void setCharacters(char[] characters) {
+		this.characters = characters;
 	}
 }
 
