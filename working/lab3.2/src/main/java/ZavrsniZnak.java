@@ -31,6 +31,25 @@ public abstract class ZavrsniZnak extends Node {
 	public String toString() {
 		return getName() + String.format("(%d,%s)", lineNumber, value);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof ZavrsniZnak)) return false;
+
+		ZavrsniZnak that = (ZavrsniZnak) o;
+		if (getName() != null) {
+			if (!getName().equals(that.getName())) return false;
+		} else {
+			if (that.getName() != null) return false;
+		}
+		return value != null ? value.equals(that.value) : that.value == null;
+	}
+
+	@Override
+	public int hashCode() {
+		return value != null ? value.hashCode() : 0;
+	}
 }
 
 //###########################################################################//

@@ -15,4 +15,8 @@ public class SemAnalysisException extends RuntimeException {
 	public SemAnalysisException(Throwable cause) {
 		super(cause);
 	}
+
+	public Throwable throwThis() {
+		throw this;
+	}
 }

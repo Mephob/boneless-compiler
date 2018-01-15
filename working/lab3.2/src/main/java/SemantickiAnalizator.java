@@ -1,6 +1,9 @@
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 public class SemantickiAnalizator {
@@ -49,7 +52,7 @@ public class SemantickiAnalizator {
 	}
 
 
-	public static void main(String[] args) { //throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ClassNotFoundException {
+	public static void main(String[] args) throws IOException { //throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ClassNotFoundException {
 		//int x = (int) 2.4e20;
 //		Class<? extends	 Node> classN =  BROJ.class;
 //		Node n = new BROJ(null, 42, "1024");
@@ -95,8 +98,68 @@ public class SemantickiAnalizator {
 //		} catch (InvocationTargetException e) {
 //			e.printStackTrace();
 //		}
+//		Map<String, String> x = new HashMap<>();
+//		x.merge("42", "42", (o, n) -> {
+//			throw new IllegalStateException();
+//		});
+//		Map<String, String> x2 = new HashMap<>();
 
-		realMain(System.in, System.out);
+		//x.forEach(x2::put);
+//		const int i = 34;
+
+//		int i = 3;
+//		Class<?> v = int.class;
+//		System.out.println(v == int.class);
+//		System.out.println(v.equals(int.class));
+//
+//		Stack<String> bljufljy = new Stack<>();
+//		bljufljy.push("pimpke");
+//		bljufljy.push("krastavac");
+//		bljufljy.push("vnwj");
+//
+//		System.out.println(bljufljy.get(0));
+//		System.out.println(bljufljy.get(bljufljy.size() - 1));
+//		System.out.println(bljufljy.peek());
+
+//		System.out.printf("%f", Math.pow(54, 54));
+//		int[] nbjr = new int[42];
+//		System.out.println(int[].class);
+//		System.out.println(nbjr.getClass().isArray());
+//		int mno = 42;
+//		System.out.println(int.class);
+//		System.out.println(Integer.parseInt("0x42".substring(2), 16));
+		realMain(System.in, System.out);//Files.newInputStream(Paths.get("../../../shit/input/1.in"))
+		//realMain(Files.newInputStream(Paths.get("../../../shit/input/5.in")), System.out);
+//		FileVisitor<Path> fv = new FileVisitor<Path>() {
+//			@Override
+//			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+//				return FileVisitResult.CONTINUE;
+//			}
+//
+//			@Override
+//			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+//				if (!file.toString().endsWith(".in")) {
+//					return FileVisitResult.CONTINUE;
+//				}
+//				realMain(
+//					  Files.newInputStream(file),
+//					  Files.newOutputStream(Paths.get("tvoj_output/"
+//						    + file.getFileName().toString().substring(0, file.getFileName().toString().indexOf(".")) + ".out")));
+//				return FileVisitResult.CONTINUE;
+//			}
+//
+//			@Override
+//			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+//				return FileVisitResult.CONTINUE;
+//			}
+//
+//			@Override
+//			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+//				return FileVisitResult.CONTINUE;
+//			}
+//		};
+
+		//Files.walkFileTree(Paths.get("input"), fv);
 	}
 
 	private static void realMain(InputStream in, OutputStream out) {
@@ -152,11 +215,29 @@ public class SemantickiAnalizator {
 		}
 
 
-		NodeVisitor nv = new TreePrintVisitor();
-		head.acceptVisitor(nv);
+		//NodeVisitor nv = new TreePrintVisitor();
+		//head.acceptVisitor(nv);
 
-		//TODO provijeritipostoji li main(void -> int) print main
-		//TODO provijeriti da svaka funkcij koja je deklarirana mora biti i definirana print funkcija
+		SemAnalizatorVisitor bljub = new SemAnalizatorVisitor();
+		try {
+			head.acceptVisitor(bljub);
+		} catch (SemAnalysisException e) {
+			System.out.println(e.getMessage());
+			return;
+		} catch (Exception e) {
+			NodeVisitor nv = new TreePrintVisitor();
+			head.acceptVisitor(nv);
+			e.printStackTrace();
+			return;
+		}
+
+		try {
+			bljub.findMain();
+			//System.err.println("main exists");
+			bljub.areAllDeclaredFunctionsDefined();
+		} catch (SemAnalysisException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 
 	private static void testListParam(List<? extends test> listTest) {
