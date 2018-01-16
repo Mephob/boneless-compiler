@@ -128,8 +128,28 @@ public class SemantickiAnalizator {
 //		int mno = 42;
 //		System.out.println(int.class);
 //		System.out.println(Integer.parseInt("0x42".substring(2), 16));
-		realMain(System.in, System.out);//Files.newInputStream(Paths.get("../../../shit/input/1.in"))
-		//realMain(Files.newInputStream(Paths.get("../../../shit/input/5.in")), System.out);
+
+		//######################prije uploada ovo odkomentirati!!!!!!!!!!!!!!!!!!!!!!!!!################################
+		String s = realMain(System.in, System.out);//Files.newInputStream(Paths.get("../../../shit/input/1.in"))
+		if (!s.isEmpty()) {
+			System.out.println(s);
+		}
+
+//		for (int n = 1; n <= 1231; n++) {
+//			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + n + ".in")), System.out);
+//			List<String> ls = Files.readAllLines(Paths.get("../../../shit/ocekivani_output/" + n + ".out"));
+//			if ((s.isEmpty() && ls.isEmpty()) || (!ls.isEmpty() && s.equals(ls.get(0)))) {
+//				System.out.println("../../../shit/input/" + n + ".out OK");
+//				continue;
+//			}
+//			System.out.println(">>>>in: ../../../shit/input/" + n + ".in");
+//			System.out.println(s);
+//			System.out.println("Should be:");
+//			System.out.println(ls.isEmpty() ? "" : ls.get(0));
+//			System.out.println("#-------------------------------------------------------#");
+//			//break;
+//		}
+
 //		FileVisitor<Path> fv = new FileVisitor<Path>() {
 //			@Override
 //			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -162,7 +182,7 @@ public class SemantickiAnalizator {
 		//Files.walkFileTree(Paths.get("input"), fv);
 	}
 
-	private static void realMain(InputStream in, OutputStream out) {
+	private static String realMain(InputStream in, OutputStream out) {
 		Scanner sc = new Scanner(in);
 		Stack<NezavrsniZnak> daddy = new Stack<>();
 
@@ -222,22 +242,30 @@ public class SemantickiAnalizator {
 		try {
 			head.acceptVisitor(bljub);
 		} catch (SemAnalysisException e) {
-			System.out.println(e.getMessage());
-			return;
+			//System.out.println(e.getMessage());
+			return e.getMessage();
 		} catch (Exception e) {
 			NodeVisitor nv = new TreePrintVisitor();
 			head.acceptVisitor(nv);
 			e.printStackTrace();
-			return;
+			System.exit(1);
 		}
 
 		try {
 			bljub.findMain();
-			//System.err.println("main exists");
+		} catch (SemAnalysisException e) {
+			//System.out.println(e.getMessage());
+			return e.getMessage();
+		}
+
+		try {
 			bljub.areAllDeclaredFunctionsDefined();
 		} catch (SemAnalysisException e) {
-			System.out.println(e.getMessage());
+			//System.out.println(e.getMessage());
+			return e.getMessage();
 		}
+
+		return "";
 	}
 
 	private static void testListParam(List<? extends test> listTest) {

@@ -187,6 +187,8 @@ class SemAnalizatorVisitor implements NodeVisitor {
 
 	private Map<String, Funkcija> definedFunctions = new HashMap<>();
 
+	//private Stack<Map<String, Object>> values = new Stack<>();
+
 	private Stack<Map<String, Tip>> initDeklaratori = new Stack<>();
 
 	private List<Funkcija> allDeclaredFunctions = new ArrayList<>();
@@ -210,22 +212,22 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			if (s.equals("main")) {
 				f = definedFunctions.get(s);
 				if (!(f.args.size() == 0) || !(f.primitiv.equals(int.class))) {
-					throw new SemAnalysisException("funkcija");
+					throw new SemAnalysisException("main");
 				}
 				return f;
 			}
 		}
 
-		throw new SemAnalysisException("funkcija");
+		throw new SemAnalysisException("main");
 	}
 
 	public boolean areAllDeclaredFunctionsDefined() {
 		for (Funkcija f : allDeclaredFunctions) {
-			if (initDeklaratori.peek().get(f.name) == null || !(initDeklaratori.peek().get(f.name) instanceof Funkcija)) {
+			if (definedFunctions.get(f.name) == null) {
 				throw new SemAnalysisException("funkcija");
 			}
 
-			Funkcija f2 = (Funkcija) initDeklaratori.peek().get(f.name);
+			Funkcija f2 = (Funkcija) definedFunctions.get(f.name);
 
 			if (!(f.primitiv.equals(f2.primitiv) && f.args.equals(f2.args) && f.name.equals(f2.name))) {
 				throw new SemAnalysisException("funkcija");
@@ -491,7 +493,7 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			}
 
 			pi.setTip(buff);
-			pi.setlIzraz(!buff.isConstant);
+			pi.setlIzraz(!buff.isConstant && !(buff instanceof Funkcija) && !buff.primitiv.isArray());
 			return;
 		} else if (prvi instanceof BROJ) {
 			pi.setTip(Tip.integer);
@@ -551,13 +553,13 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			Tip prviTip = prvi.getTip();
 
 			//pi.setTip():
-			if (prviTip.equals(Tip.intA)) {
+			if (prviTip.primitiv.equals(int[].class)) {
 				if (prviTip.isConstant) {
 					pi.setTip(Tip.constInteger);
 				} else {
 					pi.setTip(Tip.integer);
 				}
-			} else if (prviTip.equals(Tip.charA)) {
+			} else if (prviTip.primitiv.equals(char[].class)) {
 				if (prviTip.isConstant) {
 					pi.setTip(Tip.constCharacter);
 				} else {
@@ -613,8 +615,10 @@ class SemAnalizatorVisitor implements NodeVisitor {
 		} else if (ui.children.get(ui.children.size() - 1) instanceof UnarniIzraz) {
 			visitChildren(ui);
 			UnarniIzraz uib = (UnarniIzraz) ui.children.get(ui.children.size() - 1);
-			uib.setlIzraz(true);
-			uib.setTip(Tip.integer);
+
+			if (!uib.getlIzraz() || !uib.getTip().isImplCastable(Tip.integer) ) {
+				throw new SemAnalysisException(generateMessage(ui));
+			}
 
 		} else if (ui.children.get(ui.children.size() - 1) instanceof CastIzraz) {
 			ui.children.get(ui.children.size() - 1).acceptVisitor(this);
@@ -639,10 +643,13 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			ci.setlIzraz(((UnarniIzraz) ci.children.get(0)).getlIzraz());
 		} else {
 			CastIzraz cib = (CastIzraz) ci.children.get(3);
-			ImeTipa it = (ImeTipa) ci.children.get(0);
-			if (!cib.getTip().isImplCastable(it.getTip())) {
+			ImeTipa it = (ImeTipa) ci.children.get(1);
+			if (!cib.getTip().isExplCastable(it.getTip())) {
 				throw new SemAnalysisException(generateMessage(ci));
 			}
+
+			ci.setTip(it.getTip());
+			ci.setlIzraz(false);
 		}
 	}
 
@@ -655,7 +662,11 @@ class SemAnalizatorVisitor implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(it));
 			}
 
-			it.setTip(toConst(((SpecifikatorTipa) it.children.get(1)).getTip()));
+			try {
+				it.setTip(toConst(((SpecifikatorTipa) it.children.get(1)).getTip()));
+			} catch (IllegalStateException e) {
+				throw new SemAnalysisException(generateMessage(it));
+			}
 		} else {
 			it.setTip(((SpecifikatorTipa) it.children.get(0)).getTip());
 		}
@@ -1183,7 +1194,7 @@ class SemAnalizatorVisitor implements NodeVisitor {
 					throw new SemAnalysisException(generateMessage(id));
 				}
 			} else if (iz.getTip().primitiv.equals(int[].class) || iz.getTip().primitiv.equals(char[].class)) {
-				if (i.getTips().size() > iz.getWhatInBracket()) {
+				if (i.getTips() == null || i.getTips().size() > iz.getWhatInBracket()) {
 					throw new SemAnalysisException(generateMessage(id));
 				}
 
@@ -1213,14 +1224,17 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			}
 
 			if (id.children.size() > 1) {
-				if (((BROJ) id.children.get(2)).getIntValue() > 1024) {
+				if (((BROJ) id.children.get(2)).getIntValue() > 1024 || ((BROJ) id.children.get(2)).getIntValue() <= 0) {
 					throw new SemAnalysisException(generateMessage(id));
 				}
 
 				//NETREBA br-elem <- BROJ.vrijedonst, jer se to metodom rijesava
+				initDeklaratori.peek().put(idn.getValue(), id.getNtip().getArrayTip());
+			} else {
+				initDeklaratori.peek().put(idn.getValue(), id.getNtip());
 			}
 
-			initDeklaratori.peek().put(idn.getValue(), id.getNtip());
+			//initDeklaratori.peek().put(idn.getValue(), id.getNtip());
 			if (id.children.size() > 1) {
 				id.setTip(id.getNtip().getArrayTip());
 			} else {
@@ -1234,11 +1248,11 @@ class SemAnalizatorVisitor implements NodeVisitor {
 				Tip buff = initDeklaratori.peek().get(idn.getValue());
 
 				if (uZagradi instanceof KR_VOID) {
-					if (!isFunction(buff, id.getNtip(), Collections.emptyList())) {
+					if (!isFunctionIdentical(buff, id.getNtip(), Collections.emptyList())) {
 						throw new SemAnalysisException(generateMessage(id));
 					}
 				} else if (uZagradi instanceof ListaParametara) {
-					if (!isFunction(buff, id.getNtip(), ((ListaParametara) uZagradi).getTips())) {
+					if (!isFunctionIdentical(buff, id.getNtip(), ((ListaParametara) uZagradi).getTips())) {
 						throw new SemAnalysisException(generateMessage(id));
 					}
 				} else {
@@ -1268,11 +1282,14 @@ class SemAnalizatorVisitor implements NodeVisitor {
 		if (i.children.size() == 1) {
 			Node buff;
 			NezavrsniZnak nz;
+			boolean canBeNiz = true;
 			for (buff = i.children.get(0); ; buff = nz.children.get(0)) {
 				if (buff instanceof NezavrsniZnak) {
 					nz = (NezavrsniZnak) buff;
 					if (nz.children.size() > 1) {
-						throw new SemAnalysisException(generateMessage(i));
+						//throw new SemAnalysisException(generateMessage(i));
+						canBeNiz = false;
+						break;
 					}
 					continue;
 				}
@@ -1280,7 +1297,7 @@ class SemAnalizatorVisitor implements NodeVisitor {
 				break;
 			}
 
-			if (buff instanceof NIZ_ZNAKOVA) {
+			if (buff instanceof NIZ_ZNAKOVA && canBeNiz) {
 				List<Tip> tips = new ArrayList<>();
 				for (int a = 0; a < ((NIZ_ZNAKOVA) buff).getCharacters().length; a++) {
 					tips.add(Tip.character);
@@ -1322,6 +1339,10 @@ class SemAnalizatorVisitor implements NodeVisitor {
 		}
 
 		for (int i = 0; i < value.length(); i++) {
+			if ((isChar && value.charAt(i)=='\'') || (!isChar && value.charAt(i)=='"')) {
+				throw new IllegalStateException();
+			}
+
 			if (value.charAt(i) != '\\') {
 				bob.append(value.charAt(i));
 				continue;
@@ -1357,18 +1378,20 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			bob.append(c);
 		});
 
-		NodeVisitor nv = new TreePrintVisitor();
-		nz.acceptVisitor(nv);
+		//NodeVisitor nv = new TreePrintVisitor();
+		//nz.acceptVisitor(nv);
 
 		return bob.toString();
 	}
 
 	private void enterDeeper() {
 		initDeklaratori.push(new HashMap<>());
+		//values.push(new HashMap<>());
 	}
 
 	private void stepOut() {
 		initDeklaratori.pop();
+		//values.pop();
 	}
 
 	//only for void in params
@@ -1378,6 +1401,30 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			if (buff.primitiv.equals(expectedRet.primitiv)) {
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	private boolean isFunctionIdentical(Tip t, Tip expectedRet, List<Tip> args) {
+		if (t instanceof Funkcija) {
+			Funkcija buff = (Funkcija) t;
+
+			if (expectedRet != null && !buff.primitiv.equals(expectedRet.primitiv)) {
+				return false;
+			}
+
+			if (buff.args.size() != args.size()) {
+				return false;
+			}
+
+			for (int i = 0; i < args.size(); i++) {
+				if (!args.get(i).equals(buff.args.get(i))) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		return false;
@@ -1397,7 +1444,7 @@ class SemAnalizatorVisitor implements NodeVisitor {
 			}
 
 			for (int i = 0; i < args.size(); i++) {
-				if (!buff.args.get(i).equals(args.get(i))) {
+				if (!args.get(i).isImplCastable(buff.args.get(i))) {
 					return false;
 				}
 			}

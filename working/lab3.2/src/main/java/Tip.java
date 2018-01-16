@@ -11,7 +11,7 @@ public class Tip {
 	public static final Tip constIntA = new Tip(int[].class, true);
 	public static final Tip charA = new Tip(char[].class, false);
 	public static final Tip constCharA = new Tip(char[].class, true);
-	public static final Tip voidType = new Tip(void.class, null);
+	public static final Tip voidType = new Tip(void.class, false);
 
 	public Tip(Class<?> primitiv, Boolean isConstant) {
 		this.primitiv = primitiv;
