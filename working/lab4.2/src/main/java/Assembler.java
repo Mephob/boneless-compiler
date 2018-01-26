@@ -710,6 +710,13 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(bii));
 			bii.setTip(Tip.integer);
 			bii.setlIzraz(false);
+			//<<<<__>>>> OVO DODAO
+			//valjda ide u ovaj blok a ne dolje kod tode?
+			instructions.addInstruction(" POP R0");
+			instructions.addInstruction(" POP R1");
+			instructions.addInstruction(" AND R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
+			instructions.addInstruction(" PUSH R0");
+			//<<<<__>>>> KRAJ DODANOG
 		}
 
 		//#########################
@@ -734,6 +741,13 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(bxi));
 			bxi.setTip(Tip.integer);
 			bxi.setlIzraz(false);
+			//<<<<__>>>> OVO DODAO
+			//valjda ide u ovaj blok a ne dolje kod tode?
+			instructions.addInstruction(" POP R0");
+			instructions.addInstruction(" POP R1");
+			instructions.addInstruction(" XOR R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
+			instructions.addInstruction(" PUSH R0");
+			//<<<<__>>>> KRAJ DODANOG
 		}
 
 		//#########################
@@ -758,6 +772,13 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(bii));
 			bii.setTip(Tip.integer);
 			bii.setlIzraz(false);
+			//<<<<__>>>> OVO DODAO
+			//valjda ide u ovaj blok a ne dolje kod tode?
+			instructions.addInstruction(" POP R0");
+			instructions.addInstruction(" POP R1");
+			instructions.addInstruction(" OR R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
+			instructions.addInstruction(" PUSH R0");
+			//<<<<__>>>> KRAJ DODANOG
 		}
 
 		//#########################
