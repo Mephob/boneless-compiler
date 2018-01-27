@@ -63,7 +63,15 @@ public class SemantickiAnalizator {
 //		for (int i = 0; i < vnfjn.length; i++) {
 //			System.out.println("stuff:" + vnfjn[i]);
 //		}
-		System.out.print(String.format("bchevkwr%d", 'v'));
+		//System.out.println(~0);
+		int x = -1;
+		System.out.println(Integer.toBinaryString(x));
+		System.out.println(Integer.toBinaryString(x>>>1));
+		System.out.println(Integer.toBinaryString(x&1));
+		System.out.println(Integer.toBinaryString(((x>>>1) | (x&1))));
+		System.out.println(Integer.toBinaryString(((x>>1) | (x&1)) - 1));
+		System.out.print((((x>>>1) | (x&1)) + ~0) >>> 31);
+		//System.out.print(String.format("bchevkwr%d", 'v'));
 		//System.out.println(String.join(" ", vnfjn));
 
 //		for (int n = 1; n <= 1231; n++) {

@@ -20,6 +20,8 @@ class Assembler implements NodeVisitor {
 
 	private Stack<Integer> looId = new Stack<>();
 
+	int onStack = 0;
+
 	//NO! private int stackPointer = 0x400000;
 
 	static {
@@ -323,7 +325,6 @@ class Assembler implements NodeVisitor {
 
 			pi.setTip(buff);
 			pi.setlIzraz(!buff.isConstant && !(buff instanceof Funkcija) && !buff.primitiv.isArray());
-			//todo stavi adresu is initdeklaratora, ak nema onda nekaj drugo???
 
 			String adress = "";
 			out: for (int i = initDeklaratori.size() - 1; i > 0; i--) {
@@ -458,15 +459,21 @@ class Assembler implements NodeVisitor {
 			//##################poziv funkcije
 			addCALL(((Funkcija) prvi.getTip()).name, false);
 		} else if (drugi instanceof L_ZAGRADA && treci instanceof ListaArgumenata) {
+
+			int buff = onStack;
+
 			treci.acceptVisitor(this);
 			if (!isFunction(prvi.getTip(), null, ((ListaArgumenata) treci).getTips())) {
 				throw new SemAnalysisException(generateMessage(pi));
 			}
 
+			ListaArgumenata la = (ListaArgumenata) treci;
 			//###########################poziv funkcije
-			//todo push koliko zauzeto???
+			//push je napravljen u listaArgumenata
 			addCALL(((Funkcija) prvi.getTip()).name, false);
-			//todo ocisti stog
+
+			buff = onStack - buff;
+			moveSP(buff, true);
 		} else {
 			throw new IllegalStateException(generateMessage(pi));
 		}
@@ -497,6 +504,12 @@ class Assembler implements NodeVisitor {
 			visitChildren(ui);
 			ui.setTip(((PostfiksIzraz) ui.children.get(0)).getTip());
 			ui.setlIzraz(((PostfiksIzraz) ui.children.get(0)).getlIzraz());
+			//ako adresa promijenit u vrijednost ali samo ak ti caca nije unarni_izraz
+			if (!(ui.getParent() instanceof UnarniIzraz) && ((PostfiksIzraz) ui.children.get(0)).isAdress) {
+				addPOP("R0");
+				instructions.addInstruction(" LOAD R1, (R0)");
+				addPUSH("R1");
+			}
 			return;
 		} else if (ui.children.get(ui.children.size() - 1) instanceof UnarniIzraz) {
 			visitChildren(ui);
@@ -506,14 +519,41 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(ui));
 			}
 
+			//new
+			addPOP("R1");
+			instructions.addInstruction(" LOAD R0, (R1)");
+			if (ui.children.get(0) instanceof OP_INC) {
+				instructions.addInstruction(" ADD R0, 1, R0");
+			} else {
+				instructions.addInstruction(" SUB R0, 1, R0");
+			}
+			addPUSH("R0");
+			instructions.addInstruction(" STORE R0, (R1)");
 		} else if (ui.children.get(ui.children.size() - 1) instanceof CastIzraz) {
 			ui.children.get(ui.children.size() - 1).acceptVisitor(this);
 			((CastIzraz) ui.children.get(ui.children.size() - 1)).setTip(Tip.integer);
 
 			//#############################3
-			//todo ako unarni operator ++, --
-			//todo ako negacija uzmes, negiras funkcija CALL
-			//todo ako ~ trivijalno
+			UnarniOperator uo = (UnarniOperator) ui.children.get(0);
+
+			addPOP("R0");
+			if (uo.children.get(0) instanceof OP_NEG) {
+				//stack overflow
+				//(((x>>1) | (x&1)) + ~0U) >> 31
+				instructions.addInstruction(" MOVE R0, R1");
+				instructions.addInstruction(" SHR R1, 1, R1");
+				instructions.addInstruction(" AND R0, 1, R0");
+				instructions.addInstruction(" OR R0, R1, R0");
+				instructions.addInstruction(" SUB R0, 1, R0");
+				instructions.addInstruction(" SHR R0, %D 31, R0");
+			} else if (uo.children.get(0) instanceof MINUS) {
+				instructions.addInstruction(" MOVE 0, R1");
+				instructions.addInstruction(" SUB R1, R0, R0");
+			} else if (uo.children.get(0) instanceof OP_TILDA) {
+				instructions.addInstruction(" XOR R0, -1, R0");
+			}
+
+			addPUSH("R0");
 		} else throw new IllegalStateException(generateMessage(ui));
 
 		ui.setlIzraz(false);
@@ -593,12 +633,6 @@ class Assembler implements NodeVisitor {
 			mi.setlIzraz(false);
 
 			//###################################################################
-			//todo napravit
-
-			//instructions.addInstruction("LOAD R0 " + "nekiKurac");
-			//instructions.addInstruction("LOAD R1 " + "nekiKurac");
-			//addPUSH("R0");
-			//addPUSH("R1");
 			if (mi.children.get(1) instanceof OP_PUTA) {
 				addCALL("MUL", true);
 			} else if (mi.children.get(1) instanceof OP_DIJELI) {
@@ -607,14 +641,12 @@ class Assembler implements NodeVisitor {
 				addCALL("MOD", true);
 			}
 
-			clearStackOf(8, true);
+			//clearStackOf(8, true);
+			moveSP(8, true);
+			addPUSH("R6");
 			//povratna vrijednost je na stogu a argumenti su maknuti
 			//tako da se u mapi dinamiski generira kaj treba zapravo pisati
 		}
-
-		//#########################################3
-		//todo pozvati funkciju dijeli/mnozi i na kraju ju i napisati UVIJEK
-		//za cast izraz
 	}
 
 
@@ -635,12 +667,16 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(ai));
 			ai.setTip(Tip.integer);
 			ai.setlIzraz(false);
-		}
 
-		//##############################################################
-		//pop r1
-		//pop r2
-		//todo ovisno o +/- genrirati ADD, SUB
+			addPOP("R0");
+			addPOP("R1");
+			if (ai.children.get(1) instanceof PLUS) {
+				instructions.addInstruction(" ADD R1, R0, R0");
+			} else {
+				instructions.addInstruction(" SUB R1, R0, R0");
+			}
+			addPUSH("R0");
+		}
 	}
 
 
@@ -652,6 +688,9 @@ class Assembler implements NodeVisitor {
 			oi.setTip(x.getTip());
 			oi.setlIzraz(x.getlIzraz());
 		} else {
+			int broj = br;
+			br++;
+
 			OdnosniIzraz y = (OdnosniIzraz) oi.children.get(0);
 			y.acceptVisitor(this);
 			if (!y.getTip().isImplCastable(Tip.integer))
@@ -661,11 +700,29 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(oi));
 			oi.setTip(Tip.integer);
 			oi.setlIzraz(false);
-		}
 
-		//##########################################################
-		//todo CMP, i onda zastavica JP
-		//todo rijesit JP gdje sve skace
+			//new
+			addPOP("R1");
+			addPOP("R0");
+			instructions.addInstruction(" CMP R0, R1");
+			if (oi.children.get(1) instanceof OP_LT) {
+				instructions.addInstruction(" JP_SLT OI" + broj);
+			} else if (oi.children.get(1) instanceof OP_GT) {
+				instructions.addInstruction(" JP_SGT OI" + broj);
+			} else if (oi.children.get(1) instanceof OP_LTE) {
+				instructions.addInstruction(" JP_SLE OI" + broj);
+			} else {
+				instructions.addInstruction(" JP_SGE OI" + broj);
+			}
+
+			instructions.addInstruction(" MOVE 0, R0");
+			addPUSH("R0");
+			instructions.addInstruction(" JP OIEND" + broj);
+			instructions.addInstruction("OI" + broj + " MOVE -1, R0");
+			instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
+			//addPUSH("R0");
+			instructions.addInstruction("OIEND" + broj);
+		}
 	}
 
 
@@ -686,10 +743,27 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(ji));
 			ji.setTip(Tip.integer);
 			ji.setlIzraz(false);
-		}
 
-		//####################################################
-		//todo isto ko i odnosni
+			int broj = br;
+			br++;
+			//new
+			addPOP("R1");
+			addPOP("R0");
+			instructions.addInstruction(" CMP R0, R1");
+			if (ji.children.get(1) instanceof OP_EQ) {
+				instructions.addInstruction(" JP_SLT JI" + broj);
+			} else if (ji.children.get(1) instanceof OP_NEG) {
+				instructions.addInstruction(" JP_SGT JI" + broj);
+			}
+
+			instructions.addInstruction(" MOVE 0, R0");
+			addPUSH("R0");
+			instructions.addInstruction(" JP JIEND" + broj);
+			instructions.addInstruction("JI" + broj + " MOVE -1, R0");
+			instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
+			//addPUSH("R0");
+			instructions.addInstruction("JIEND" + broj);
+		}
 	}
 
 
@@ -712,15 +786,12 @@ class Assembler implements NodeVisitor {
 			bii.setlIzraz(false);
 			//<<<<__>>>> OVO DODAO
 			//valjda ide u ovaj blok a ne dolje kod tode?
-			instructions.addInstruction(" POP R0");
-			instructions.addInstruction(" POP R1");
-			instructions.addInstruction(" AND R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
-			instructions.addInstruction(" PUSH R0");
+			addPOP("R0");
+			addPOP("R1");
+			instructions.addInstruction(" AND R1, R0, R0");
+			addPUSH("R0");
 			//<<<<__>>>> KRAJ DODANOG
 		}
-
-		//#########################
-		//todo isto ko +/- samo s AND
 	}
 
 
@@ -743,15 +814,12 @@ class Assembler implements NodeVisitor {
 			bxi.setlIzraz(false);
 			//<<<<__>>>> OVO DODAO
 			//valjda ide u ovaj blok a ne dolje kod tode?
-			instructions.addInstruction(" POP R0");
-			instructions.addInstruction(" POP R1");
-			instructions.addInstruction(" XOR R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
-			instructions.addInstruction(" PUSH R0");
+			addPOP("R0");
+			addPOP("R1");
+			instructions.addInstruction(" XOR R1, R0, R0");
+			addPUSH("R0");
 			//<<<<__>>>> KRAJ DODANOG
 		}
-
-		//#########################
-		//todo isto ko +/- samo s XOR
 	}
 
 
@@ -774,15 +842,12 @@ class Assembler implements NodeVisitor {
 			bii.setlIzraz(false);
 			//<<<<__>>>> OVO DODAO
 			//valjda ide u ovaj blok a ne dolje kod tode?
-			instructions.addInstruction(" POP R0");
-			instructions.addInstruction(" POP R1");
-			instructions.addInstruction(" OR R1, R0, R0");	//jel trpi FRISC razmake nakon zareza?
-			instructions.addInstruction(" PUSH R0");
+			addPOP("R0");
+			addPOP("R1");
+			instructions.addInstruction(" OR R1, R0, R0");
+			addPUSH("R0");
 			//<<<<__>>>> KRAJ DODANOG
 		}
-
-		//#########################
-		//todo isto ko +/- samo s OR
 	}
 
 
@@ -794,21 +859,37 @@ class Assembler implements NodeVisitor {
 			lii.setTip(x.getTip());
 			lii.setlIzraz(x.getlIzraz());
 		} else {
+			int broj = br;
+			br++;
+
 			LogIIzraz y = (LogIIzraz) lii.children.get(0);
 			y.acceptVisitor(this);
 			if (!y.getTip().isImplCastable(Tip.integer))
 				throw new SemAnalysisException(generateMessage(lii));
+
+			addPOP("R0");
+			instructions.addInstruction(" MOVE 0, R2");
+			instructions.addInstruction(" CMP R0, R2");
+			instructions.addInstruction(" JP_EQ LOGIFALSE" + broj);
+
 			x.acceptVisitor(this);
 			if (!x.getTip().isImplCastable(Tip.integer))
 				throw new SemAnalysisException(generateMessage(lii));
 			lii.setTip(Tip.integer);
 			lii.setlIzraz(false);
-		}
 
-		//#########################
-		//todo ako je onaj prvi istinit samo idi dalje, inace skaci van
-		//(mora od roditelja dobiti unaprijed generirano ima)
-		//
+			addPOP("R1");
+			instructions.addInstruction(" CMP R1, R2");
+			instructions.addInstruction(" JP_EQ LOGIFALSE" + broj);
+			instructions.addInstruction(" MOVE -1, R3");
+			instructions.addInstruction(" JP LOGIEND" + broj);
+
+			instructions.addInstruction("LOGIFALSE" + broj + " MOVE 0, R3");
+
+			instructions.addInstruction("LOGIEND" + broj);
+			addPUSH("R3");
+
+		}
 	}
 
 
@@ -820,23 +901,40 @@ class Assembler implements NodeVisitor {
 			lii.setTip(x.getTip());
 			lii.setlIzraz(x.getlIzraz());
 		} else {
+			int broj = br;
+			br++;
+
 			LogIliIzraz y = (LogIliIzraz) lii.children.get(0);
 			y.acceptVisitor(this);
 			if (!y.getTip().isImplCastable(Tip.integer))
 				throw new SemAnalysisException(generateMessage(lii));
+
+			addPOP("R0");
+			instructions.addInstruction(" MOVE 0, R2");
+			instructions.addInstruction(" CMP R0, R2");
+			instructions.addInstruction(" JP_NEQ LOGILITRUE" + broj);
+
 			x.acceptVisitor(this);
 			if (!x.getTip().isImplCastable(Tip.integer))
 				throw new SemAnalysisException(generateMessage(lii));
 			lii.setTip(Tip.integer);
 			lii.setlIzraz(false);
-		}
 
-		//#########################
-		//todo isto ko logI samo obrnuto
+			addPOP("R1");
+			instructions.addInstruction(" CMP R1, R2");
+			instructions.addInstruction(" JP_NEQ LOGILITRUE" + broj);
+			instructions.addInstruction(" MOVE 0, R3");
+			instructions.addInstruction(" JP LOGILIEND" + broj);
+
+			instructions.addInstruction("LOGILITRUE" + broj + " MOVE -1, R3");
+
+			instructions.addInstruction("LOGILIEND" + broj);
+			addPUSH("R3");
+		}
 	}
 
 
-	public void accept(IzrazPridruzivanja ip) {//todo mora rezu pushat na stog
+	public void accept(IzrazPridruzivanja ip) {
 		//visitChildren(ip);
 		if (ip.children.get(0) instanceof LogIliIzraz) {
 			LogIliIzraz x = (LogIliIzraz) ip.children.get(ip.children.size() - 1);
@@ -852,11 +950,12 @@ class Assembler implements NodeVisitor {
 			if (!y.getTip().isImplCastable(x.getTip())) throw new SemAnalysisException(generateMessage(ip));
 			ip.setTip(x.getTip());
 			ip.setlIzraz(false);
-		}
 
-		//######################################
-		//todo napravit metodu getADRESS, koaj varca string  "SP + x" ili globalno imeLabele
-		//ovisno o tome gdje je dafinirana variabla
+			addPOP("R1");
+			addPOP("R0");
+			instructions.addInstruction(" STORE R1, (R0)");
+			addPUSH("R1");//pusha vrijednost tog na stog za ulancavanje izraza pridruzivanja
+		}
 	}
 
 
@@ -868,7 +967,11 @@ class Assembler implements NodeVisitor {
 			i.setTip(x.getTip());
 			i.setlIzraz(x.getlIzraz());
 		} else {
-			visitChildren(i);
+			i.children.get(0).acceptVisitor(this);
+
+			addPOP("R0");
+
+			i.children.get(1).acceptVisitor(this);
 			i.setTip(x.getTip());
 			i.setlIzraz(false);
 		}
@@ -886,8 +989,8 @@ class Assembler implements NodeVisitor {
 				//mislim da ne
 			}
 		}
-		visitChildren(sn);
 
+		visitChildren(sn);
 		//#######################################
 		//new
 		if (sn.children.get(1) instanceof ListaDeklaracija) {
@@ -905,6 +1008,9 @@ class Assembler implements NodeVisitor {
 
 	public void accept(Naredba n) {//ok
 		visitChildren(n);
+		if (n.children.get(0) instanceof IzrazNaredba) {
+			moveSP(4, true);
+		}
 	}
 
 
@@ -915,6 +1021,7 @@ class Assembler implements NodeVisitor {
 		} else {
 			visitChildren(in);
 			in.setTip(((Izraz) in.children.get(0)).getTip());
+			//addPOP("R0"); //ne tu nego u naredba
 		}
 	}
 
@@ -959,34 +1066,45 @@ class Assembler implements NodeVisitor {
 				instructions.addInstruction(" CMP R0, 0");
 				instructions.addInstruction(" JP_EQ petljafin" + broj);
 				//bvbjfbjrfv
+				int buff = onStack;
 				np.children.get(4).acceptVisitor(this);
 
 				instructions.addInstruction("petljainkr" + broj +" JP petlja" +  broj);
 				instructions.addInstruction("petljafin" + broj);
+				buff = onStack - buff;
+				moveSP(buff, true);
 				break;
 			case 6:
 				np.children.get(2).acceptVisitor(this);
 				//novo
+				moveSP(4, true);
 				instructions.addInstruction("petlja" + broj);
 				np.children.get(3).acceptVisitor(this);
 				addPOP("R0");
+
 				instructions.addInstruction(" CMP R0, 0");
 				instructions.addInstruction(" JP_EQ petljafin" + broj);
+
 				if (!((IzrazNaredba) np.children.get(3)).getTip().isImplCastable(Tip.integer)) {
 					throw new SemAnalysisException(generateMessage(np));
 				}
+
+				int buff6 = onStack;
 				np.children.get(5).acceptVisitor(this);
 				instructions.addInstruction("petljainkr" + broj +" JP petlja" + broj);
 				instructions.addInstruction("petljafin" + broj);
+
+				buff6 = onStack - buff6;
+				moveSP(buff6, true);
 				break;
 			case 7:
 				np.children.get(2).acceptVisitor(this);
 				//novo
+				moveSP(4, true);
 				instructions.addInstruction("petlja" + broj);
-
 				np.children.get(3).acceptVisitor(this);
-
 				addPOP("R0");
+
 				instructions.addInstruction(" CMP R0, 0");
 				instructions.addInstruction(" JP_EQ petljafin" + broj);
 
@@ -996,9 +1114,14 @@ class Assembler implements NodeVisitor {
 				//zamijenjeno tu
 				np.children.get(6).acceptVisitor(this);
 				instructions.addInstruction("petljainkr" + broj);
+
+				int buff7 = onStack;
 				np.children.get(4).acceptVisitor(this);
 				instructions.addInstruction(" JP petlja" + broj);
 				instructions.addInstruction("petljafin " + broj);
+
+				buff7 = onStack - buff7;
+				moveSP(buff7, true);
 				//<<<<<<<<<<<<<<<<<<<<<<<
 				break;
 			default:
@@ -1391,15 +1514,18 @@ class Assembler implements NodeVisitor {
 					tips.add(Tip.character);
 				}
 
-				//todo NIZ_ZNAKOVA JE VEC NA STOGU
 				i.setTips(tips);
 				i.setTip(Tip.charA);
 
 				//new done
-				char[] chars = ((NIZ_ZNAKOVA) buff).getCharacters();
-				for (int n = 0; n < chars.length; n++) {
-					instructions.addInstruction(" MOVE " + Character.getNumericValue(chars[n]) + ", R0");
-					instructions.addInstruction(" STORE R0, (SP + " + n*4 +")");
+//				char[] chars = ((NIZ_ZNAKOVA) buff).getCharacters();
+//				for (int n = 0; n < chars.length; n++) {
+//					instructions.addInstruction(" MOVE " + Character.getNumericValue(chars[n]) + ", R0");
+//					instructions.addInstruction(" STORE R0, (SP + " + n*4 +")");
+//				}
+				for (int n = ((NIZ_ZNAKOVA) buff).getCharacters().length - 1; n >= 0; n++) {
+					addPOP("R1");
+					instructions.addInstruction(" STORE R1, (SP + " + n*2*4 + ")");
 				}
 			} else {
 				i.setTip(((IzrazPridruzivanja) i.children.get(0)).getTip());
@@ -1610,23 +1736,23 @@ class Assembler implements NodeVisitor {
 		moveSP(4, false);
 	}
 
-	/**
-	 * PAZI. uvijek mice n. Ako keepTop onaj inicijalini pop se ne broji u n.
-	 *
-	 * @param n	DO NOT call with 0
-	 * @param keepTop
-	 */
-	private void clearStackOf(int n, boolean keepTop) {
-		if (keepTop) {
-			instructions.addInstruction(" POP R0");
-		}
-
-		moveSP(n, true);
-
-		if (keepTop) {
-			instructions.addInstruction(" PUSH R0");
-		}
-	}
+//	/**
+//	 * PAZI. uvijek mice n. Ako keepTop onaj inicijalini pop se ne broji u n.
+//	 *
+//	 * @param n	DO NOT call with 0
+//	 * @param keepTop
+//	 */
+//	private void clearStackOf(int n, boolean keepTop) {
+//		if (keepTop) {
+//			instructions.addInstruction(" POP R0");
+//		}
+//
+//		moveSP(n, true);
+//
+//		if (keepTop) {
+//			instructions.addInstruction(" PUSH R0");
+//		}
+//	}
 
 	//DO NOT CALL YOURSELF internstuff!!!!!!!
 	private void moveSP(int x, boolean generateCode) {
@@ -1657,7 +1783,8 @@ class Assembler implements NodeVisitor {
 			}
 		}
 
-		//removed.forEach(s -> initDeklaratori.peek().remove(s));//todo mozda u petlju da moze vise izac
+		onStack -= x;
+		//removed.forEach(s -> initDeklaratori.peek().remove(s));
 
 		if (generateCode) {
 			int n = Math.abs(x);

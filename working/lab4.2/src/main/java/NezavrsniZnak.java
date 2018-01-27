@@ -141,6 +141,8 @@ class UnarniIzraz extends NezavrsniZnak {
 
 	private Boolean lIzraz;
 
+	String adress;
+
 	protected UnarniIzraz(Node parent) {
 		super("<unarni_izraz>", parent);
 	}
