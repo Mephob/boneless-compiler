@@ -14,7 +14,7 @@ class Assembler implements NodeVisitor {
 
 	private List<Funkcija> allDeclaredFunctions = new ArrayList<>();
 
-	private InstructionBuilder instructions = new InstructionBuilder();
+	InstructionBuilder instructions = new InstructionBuilder();
 
 	private int br = 0;
 
@@ -348,12 +348,12 @@ class Assembler implements NodeVisitor {
 			instructions.addInstruction(String.format(" MOVE %d, R0", ((BROJ) prvi).getIntValue()));
 		} else if (prvi instanceof ZNAK) {
 			pi.setTip(Tip.character);
-			instructions.addInstruction(" MOVE " + Character.getNumericValue(((ZNAK) prvi).getCharValue()) + ", R0" );
+			instructions.addInstruction(" MOVE " + Integer.toString(((ZNAK) prvi).getCharValue()) + ", R0" );
 		} else if (prvi instanceof NIZ_ZNAKOVA) {
 			pi.setTip(Tip.constCharA);
 			char[] chars = ((NIZ_ZNAKOVA) prvi).getCharacters();
 			for (int n = 0; n < chars.length; n++) {
-				instructions.addInstruction(" MOVE " + Character.getNumericValue(chars[n]) + ", R0");
+				instructions.addInstruction(" MOVE " + Integer.toString(chars[n]) + ", R0");
 				addPUSH("R0");
 			}
 		} else if (prvi instanceof L_ZAGRADA) {
@@ -990,10 +990,11 @@ class Assembler implements NodeVisitor {
 			}
 		}
 
+		sn.onStack = onStack;
 		visitChildren(sn);
 		//#######################################
 		//new
-		if (sn.children.get(1) instanceof ListaDeklaracija) {
+		if (!(sn.getParent() instanceof DefinicijaFunkcije) && sn.children.get(1) instanceof ListaDeklaracija) {
 			moveSP(((ListaDeklaracija)sn.children.get(1)).size, true);
 		}
 
@@ -1160,7 +1161,9 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(ns));
 			}
 
+			DefinicijaFunkcije df = (DefinicijaFunkcije) n;
 			addPOP("R6");//vrati to prek R6
+			moveSP(onStack - ((SlozenaNaredba) df.children.get(df.children.size() - 1)).onStack, true);
 			addRET();
 		} else {
 			Node n;
@@ -1445,7 +1448,7 @@ class Assembler implements NodeVisitor {
 					initDeklaratori.peek().get(idn.getValue()).size = id.getWhatInBracket();
 				} else {
 					id.size = 4;
-					instructions.addInstruction("MOVE 0, R0");
+					instructions.addInstruction(" MOVE 0, R0");
 					addPUSH("R0");
 					initDeklaratori.peek().get(idn.getValue()).adress = "SP + 0";
 					initDeklaratori.peek().get(idn.getValue()).size = 4;
@@ -1520,12 +1523,12 @@ class Assembler implements NodeVisitor {
 				//new done
 //				char[] chars = ((NIZ_ZNAKOVA) buff).getCharacters();
 //				for (int n = 0; n < chars.length; n++) {
-//					instructions.addInstruction(" MOVE " + Character.getNumericValue(chars[n]) + ", R0");
+//					instructions.addInstruction(" MOVE " + Integer.toString(chars[n]) + ", R0");
 //					instructions.addInstruction(" STORE R0, (SP + " + n*4 +")");
 //				}
-				for (int n = ((NIZ_ZNAKOVA) buff).getCharacters().length - 1; n >= 0; n++) {
+				for (int n = ((NIZ_ZNAKOVA) buff).getCharacters().length - 1; n >= 0; n--) {
 					addPOP("R1");
-					instructions.addInstruction(" STORE R1, (SP + " + n*2*4 + ")");
+					instructions.addInstruction(" STORE R1, (SP + " + Integer.toHexString(n*2*4) + ")");
 				}
 			} else {
 				i.setTip(((IzrazPridruzivanja) i.children.get(0)).getTip());
@@ -1541,7 +1544,7 @@ class Assembler implements NodeVisitor {
 			//new done
 			for (int n = lip.getTips().size() - 1; n >= 0; n++) {
 				addPOP("R1");
-				instructions.addInstruction(" STORE R1, (SP + " + n*2*4 + ")");
+				instructions.addInstruction(" STORE R1, (SP + " + Integer.toHexString(n*2*4) + ")");
 			}
 		}
 	}
@@ -1767,7 +1770,7 @@ class Assembler implements NodeVisitor {
 				}
 
 				String[] adressComponents = buff.adress.split("[ ]+");
-				int number = Integer.parseInt(adressComponents[2]);
+				int number = Integer.parseInt(adressComponents[2], 16);
 				if (adressComponents[1].equals("-")) {
 					number = -number;
 				}
@@ -1776,9 +1779,9 @@ class Assembler implements NodeVisitor {
 				adressComponents[2] = Integer.toString(number);
 
 				if (number < 0) {
-					buff.adress = String.format("SP - %d", Math.abs(number));
+					buff.adress = "SP - " + Integer.toHexString(Math.abs(number));
 				} else {
-					buff.adress = String.format("SP + %d", number);
+					buff.adress = "SP + " + Integer.toHexString(number);
 				}
 			}
 		}
@@ -1789,9 +1792,9 @@ class Assembler implements NodeVisitor {
 		if (generateCode) {
 			int n = Math.abs(x);
 			if (x >= 0) {
-				instructions.addInstruction(" ADD SP, " + n + ", SP");
+				instructions.addInstruction(" ADD SP, " + Integer.toHexString(n) + ", SP");
 			} else {
-				instructions.addInstruction(" SUB SP, " + n + ", SP");
+				instructions.addInstruction(" SUB SP, " + Integer.toHexString(n) + ", SP");
 			}
 		}
 	}

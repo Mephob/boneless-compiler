@@ -11,4 +11,8 @@ public class InstructionBuilder {
 	public void addInstruction(String s) {
 		rows.add(s);
 	}
+
+	public List<String> getRows() {
+		return rows;
+	}
 }

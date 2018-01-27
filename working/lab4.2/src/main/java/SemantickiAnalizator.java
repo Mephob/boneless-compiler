@@ -64,18 +64,25 @@ public class SemantickiAnalizator {
 //			System.out.println("stuff:" + vnfjn[i]);
 //		}
 		//System.out.println(~0);
-		int x = -1;
-		System.out.println(Integer.toBinaryString(x));
-		System.out.println(Integer.toBinaryString(x>>>1));
-		System.out.println(Integer.toBinaryString(x&1));
-		System.out.println(Integer.toBinaryString(((x>>>1) | (x&1))));
-		System.out.println(Integer.toBinaryString(((x>>1) | (x&1)) - 1));
-		System.out.print((((x>>>1) | (x&1)) + ~0) >>> 31);
+//		int x = -1;
+//		System.out.println(Integer.toBinaryString(x));
+//		System.out.println(Integer.toBinaryString(x>>>1));
+//		System.out.println(Integer.toBinaryString(x&1));
+//		System.out.println(Integer.toBinaryString(((x>>>1) | System.out.println(s);(x&1))));
+//		System.out.println(Integer.toBinaryString(((x>>1) | (x&1)) - 1));
+//		System.out.print((((x>>>1) | (x&1)) + ~0) >>> 31);
 		//System.out.print(String.format("bchevkwr%d", 'v'));
 		//System.out.println(String.join(" ", vnfjn));
 
 //		for (int n = 1; n <= 1231; n++) {
 //			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + n + ".in")), System.out);
+		System.out.println("starting");
+			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + 3 + ".in")), System.out);
+//		System.out.println(Integer.toString('a'));
+//		System.out.println(Integer.toString('b'));
+//		System.out.println(Integer.toString('\0'));
+//		System.out.println(Integer.toString('A'));
+			System.out.println(s);
 //			List<String> ls = Files.readAllLines(Paths.get("../../../shit/ocekivani_output/" + n + ".out"));
 //			if ((s.isEmpty() && ls.isEmpty()) || (!ls.isEmpty() && s.equals(ls.get(0)))) {
 //				System.out.println("../../../shit/input/" + n + ".out OK");
@@ -143,21 +150,28 @@ public class SemantickiAnalizator {
 		}
 
 
+		Assembler nv = new Assembler();
+		head.acceptVisitor(nv);
 		//NodeVisitor nv = new TreePrintVisitor();
 		//head.acceptVisitor(nv);
 
-		//todo SemAnalizatorVisitor bljub = new SemAnalizatorVisitor();
-		try {
-			//todo head.acceptVisitor(bljub);
-		} catch (SemAnalysisException e) {
-			//System.out.println(e.getMessage());
-			return e.getMessage();
-		} catch (Exception e) {
-			//NodeVisitor nv = new TreePrintVisitor();
-			//todo head.acceptVisitor(nv);
-			e.printStackTrace();
-			System.exit(1);
+		StringBuilder bob = new StringBuilder();
+		for (String s : nv.instructions.getRows()) {
+			bob.append(s);
+			bob.append('\n');
 		}
+//		//todo SemAnalizatorVisitor bljub = new SemAnalizatorVisitor();
+//		try {
+//			//todo head.acceptVisitor(bljub);
+//		} catch (SemAnalysisException e) {
+//			//System.out.println(e.getMessage());
+//			return e.getMessage();
+//		} catch (Exception e) {
+//			//NodeVisitor nv = new TreePrintVisitor();
+//			//todo head.acceptVisitor(nv);
+//			e.printStackTrace();
+//			System.exit(1);
+//		}
 
 //		try {
 //			bljub.findMain();
@@ -173,6 +187,6 @@ public class SemantickiAnalizator {
 //			return e.getMessage();
 //		}
 
-		return "";
+		return bob.toString();
 	}
 }

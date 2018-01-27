@@ -473,6 +473,8 @@ class Izraz extends NezavrsniZnak {
 //###########################################################################//
 class SlozenaNaredba extends NezavrsniZnak {
 
+	int onStack;
+
 	protected SlozenaNaredba(Node parent) {
 		super("<slozena_naredba>", parent);
 	}
@@ -583,6 +585,7 @@ class DefinicijaFunkcije extends NezavrsniZnak {
 	private Funkcija func;
 
 	private List<String> paramNames;
+
 
 	protected DefinicijaFunkcije(Node parent) {
 		super("<definicija_funkcije>", parent);
