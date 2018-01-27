@@ -1106,13 +1106,13 @@ class Assembler implements NodeVisitor {
 					throw new SemAnalysisException(generateMessage(np));
 				}
 
-				int buff6 = onStack;
+				//int buff6 = onStack;
 				np.children.get(5).acceptVisitor(this);
+				//buff6 = onStack - buff6;
+				//moveSP(buff6, true);
 				instructions.addInstruction("petljainkr" + broj +" JP petlja" + broj);
 				instructions.addInstruction("petljafin" + broj);
 
-				buff6 = onStack - buff6;
-				moveSP(buff6, true);
 				break;
 			case 7:
 				np.children.get(2).acceptVisitor(this);
@@ -1134,11 +1134,11 @@ class Assembler implements NodeVisitor {
 
 				int buff7 = onStack;
 				np.children.get(4).acceptVisitor(this);
+				buff7 = onStack - buff7;
+				moveSP(buff7, true);
 				instructions.addInstruction(" JP petlja" + broj);
 				instructions.addInstruction("petljafin" + broj);
 
-				buff7 = onStack - buff7;
-				moveSP(buff7, true);
 				//<<<<<<<<<<<<<<<<<<<<<<<
 				break;
 			default:
