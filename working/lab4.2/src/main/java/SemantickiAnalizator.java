@@ -76,8 +76,7 @@ public class SemantickiAnalizator {
 
 //		for (int n = 1; n <= 1231; n++) {
 //			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + n + ".in")), System.out);
-		System.out.println("starting");
-			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + 3 + ".in")), System.out);
+			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + 4 + ".in")), System.out);
 //		System.out.println(Integer.toString('a'));
 //		System.out.println(Integer.toString('b'));
 //		System.out.println(Integer.toString('\0'));

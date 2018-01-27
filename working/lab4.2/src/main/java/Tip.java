@@ -3,7 +3,7 @@ public class Tip {
 
 	Boolean isConstant;
 
-	String adress;
+	//String adress;
 
 	int size;
 
