@@ -15,4 +15,12 @@ public class InstructionBuilder {
 	public List<String> getRows() {
 		return rows;
 	}
+
+	public void replaceinstruction(int index, String instruction) {
+		rows.set(index, instruction);
+	}
+
+	public int size() {
+		return rows.size();
+	}
 }
