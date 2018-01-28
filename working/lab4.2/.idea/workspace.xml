@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1200" mnemonic="1" />
-    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1076" mnemonic="8" />
-    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1289" mnemonic="6" />
-    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1258" mnemonic="9" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1238" mnemonic="1" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1108" mnemonic="8" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1327" mnemonic="6" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1296" mnemonic="9" />
     <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" mnemonic="4" />
-    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1412" mnemonic="0" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="1450" mnemonic="0" />
+    <bookmark url="file://$PROJECT_DIR$/src/main/java/Assembler.java" line="523" mnemonic="5" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8d7744c9-551a-4089-8fa4-1bb1e243ddf5" name="Default" comment="" />
@@ -23,8 +24,8 @@
       <file leaf-file-name="SemantickiAnalizator.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/SemantickiAnalizator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="309">
-              <caret line="165" column="39" lean-forward="false" selection-start-line="165" selection-start-column="36" selection-end-line="165" selection-end-column="39" />
+            <state relative-caret-position="268">
+              <caret line="79" column="103" lean-forward="false" selection-start-line="79" selection-start-column="103" selection-end-line="79" selection-end-column="103" />
               <folding />
             </state>
           </provider>
@@ -33,8 +34,8 @@
       <file leaf-file-name="Assembler.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/Assembler.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="45">
-              <caret line="1656" column="44" lean-forward="false" selection-start-line="1656" selection-start-column="44" selection-end-line="1656" selection-end-column="44" />
+            <state relative-caret-position="111">
+              <caret line="1217" column="77" lean-forward="false" selection-start-line="1217" selection-start-column="77" selection-end-line="1217" selection-end-column="77" />
               <folding />
             </state>
           </provider>
@@ -106,13 +107,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>onStack</find>
-      <find>sloz</find>
-      <find>naredbaGra</find>
-      <find>slozena</find>
-      <find>pos</find>
-      <find>postfiks</find>
-      <find>slo</find>
       <find>naredba</find>
       <find>addCALL</find>
       <find>multip</find>
@@ -125,9 +119,7 @@
       <find>inicijaliza</find>
       <find>listaParame</find>
       <find>definicija</find>
-      <find>izrazPri</find>
       <find>err</find>
-      <find>DW</find>
       <find>instructions.repla</find>
       <find>izravniDeklara</find>
       <find>izravnidekl</find>
@@ -136,6 +128,15 @@
       <find>tra</find>
       <find>translate</find>
       <find>initDeklaratori.peek().put</find>
+      <find>DW</find>
+      <find>unarni</find>
+      <find>(&quot;;</find>
+      <find>izrazPri</find>
+      <find>izraz</find>
+      <find>izrazNare</find>
+      <find>KR_WHI</find>
+      <find>slozenaNa</find>
+      <find>izrazMa</find>
     </findStrings>
   </component>
   <component name="GradleLocalSettings">
@@ -148,8 +149,8 @@
       <list>
         <option value="$PROJECT_DIR$/src/main/java/Tip.java" />
         <option value="$PROJECT_DIR$/src/main/java/NezavrsniZnak.java" />
-        <option value="$PROJECT_DIR$/src/main/java/SemantickiAnalizator.java" />
         <option value="$PROJECT_DIR$/src/main/java/InstructionBuilder.java" />
+        <option value="$PROJECT_DIR$/src/main/java/SemantickiAnalizator.java" />
         <option value="$PROJECT_DIR$/src/main/java/Assembler.java" />
       </list>
     </option>
@@ -368,12 +369,12 @@
       <option name="presentableId" value="Default" />
       <updated>1516915613251</updated>
       <workItem from="1517035445072" duration="71633000" />
-      <workItem from="1517150867583" duration="15196000" />
+      <workItem from="1517150867583" duration="24042000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="86829000" />
+    <option name="totallyTimeSpent" value="95675000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="509" y="0" width="1920" height="1056" extended-state="6" />
@@ -386,7 +387,7 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3660419" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.7342889" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -420,14 +421,14 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.46085998" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.46085998" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296582" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3660419" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.7342889" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.14114584" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" />
@@ -444,15 +445,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/Assembler.java</url>
-          <line>343</line>
-          <properties />
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-      </breakpoints>
-      <option name="time" value="33" />
+      <option name="time" value="34" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="Application">
@@ -650,16 +643,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/SemantickiAnalizator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="165" column="39" lean-forward="false" selection-start-line="165" selection-start-column="36" selection-end-line="165" selection-end-column="39" />
+        <state relative-caret-position="268">
+          <caret line="79" column="103" lean-forward="false" selection-start-line="79" selection-start-column="103" selection-end-line="79" selection-end-column="103" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/Assembler.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="1656" column="44" lean-forward="false" selection-start-line="1656" selection-start-column="44" selection-end-line="1656" selection-end-column="44" />
+        <state relative-caret-position="111">
+          <caret line="1217" column="77" lean-forward="false" selection-start-line="1217" selection-start-column="77" selection-end-line="1217" selection-end-column="77" />
           <folding />
         </state>
       </provider>

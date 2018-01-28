@@ -371,10 +371,37 @@ class Assembler implements NodeVisitor {
 			return;
 		} else if (prvi instanceof BROJ) {
 			pi.setTip(Tip.integer);
+
+
 			if (initDeklaratori.size() == 1) {
-				instructions.addInstruction(" DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
+				Node parent = pi;
+				while (!(parent.getParent() instanceof UnarniIzraz)) {
+					parent = parent.getParent();
+				}
+				parent = parent.getParent();
+				UnarniIzraz ui = (UnarniIzraz) parent;
+				if (ui.children.get(0) instanceof OP_DEC) {
+					instructions.addInstruction(" DW 0" + Integer.toHexString(-((BROJ) prvi).getIntValue()));
+				} else if (ui.children.get(0) instanceof OP_INC || ui.children.get(0) instanceof PostfiksIzraz) {
+					instructions.addInstruction(" DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
+				}
+//				else if (ui.children.get(0) instanceof UnarniOperator) {
+//					UnarniOperator uo = (UnarniOperator) ui.children.get(0);
+//					if (uo.children.get(0) instanceof MINUS) {
+//						instructions.addInstruction(" DW 0" + Integer.toHexString(-((BROJ) prvi).getIntValue()));
+//					}
+//				}
+
+				//System.err.println(((BROJ) prvi).getIntValue());
+
 			} else {
-				instructions.addInstruction(String.format(" MOVE 0%s, R0", Integer.toHexString(((BROJ) prvi).getIntValue())));
+				if (((BROJ) prvi).getIntValue() > 1000000) {
+					instructions.addInstruction("buff" + br + " DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
+					instructions.addInstruction(" LOAD R0, buff" + br);
+					br++;
+				} else {
+					instructions.addInstruction(String.format(" MOVE 0%s, R0", Integer.toHexString(((BROJ) prvi).getIntValue())));
+				}
 				addPUSH("R0");
 			}
 		} else if (prvi instanceof ZNAK) {
@@ -489,7 +516,12 @@ class Assembler implements NodeVisitor {
 			instructions.addInstruction(" SHL R1, 2, R1");
 			addPOP("R0");
 
-			instructions.addInstruction(" ADD R0, R1, R0");
+			PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz) pi.children.get(0)).children.get(0);
+			if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {
+				instructions.addInstruction(" LOAD R0, (R0)");
+			}
+
+			instructions.addInstruction(" ADD R0, R1, R0");//todo
 			addPUSH("R0");
 
 			pi.isAdress = true;
@@ -1107,10 +1139,14 @@ class Assembler implements NodeVisitor {
 		if (!(sn.getParent() instanceof DefinicijaFunkcije) && !(sn.getParent().getParent() instanceof NaredbaGrananja)) {
 			instructions.addInstruction(";clearing slozenaNaredba");
 			moveSP(onStack - sn.onStack, true);
+//			if (sn.children.get(1) instanceof ListaDeklaracija) {
+//				moveSP(((ListaDeklaracija) sn.children.get(1)).size, true);
+//			}
 		}
 
 		if (sn.getParent() instanceof DefinicijaFunkcije) {
 			parameters.pop();
+			instructions.addInstruction(" RET");
 		}
 		stepOut();
 	}
@@ -1123,7 +1159,7 @@ class Assembler implements NodeVisitor {
 
 	public void accept(Naredba n) {//ok
 		visitChildren(n);
-		if (n.children.get(0) instanceof IzrazNaredba) {
+		if (n.children.get(0) instanceof IzrazNaredba && ((IzrazNaredba) n.children.get(0)).children.size() != 1) {
 			moveSP(4, true);
 		}
 	}
@@ -1179,23 +1215,25 @@ class Assembler implements NodeVisitor {
 		looId.push(broj);
 		switch (np.children.size()) {
 			case 5:
+				instructions.addInstruction("petlja" + broj);
 				np.children.get(2).acceptVisitor(this);
 				if (!((Izraz) np.children.get(2)).getTip().isImplCastable(Tip.integer)) {
 					throw new SemAnalysisException(generateMessage(np));
 				}
 				//novo
-				instructions.addInstruction("petlja" + broj);
+				//moveSP(4, true);
+
 				addPOP("R0");
 				instructions.addInstruction(" CMP R0, 0");
 				instructions.addInstruction(" JP_EQ petljafin" + broj);
 				//bvbjfbjrfv
-				int buff = onStack;
+				//int buff = onStack;
 				np.children.get(4).acceptVisitor(this);
 
 				instructions.addInstruction("petljainkr" + broj + " JP petlja" + broj);//todo tu moras cistit, ne u slozena_naredba?
 				instructions.addInstruction("petljafin" + broj);
-				buff = onStack - buff;
-				moveSP(buff, true);
+				//buff = onStack - buff;
+				//moveSP(buff, true);
 				break;
 			case 6:
 				np.children.get(2).acceptVisitor(this);
@@ -1599,7 +1637,7 @@ class Assembler implements NodeVisitor {
 				throw new SemAnalysisException(generateMessage(id));
 			}
 			if (i.getTip() == null) {
-				for (int n = 0; n < iz.size - i.getTips().size()*4; n += 4) {
+				for (int n = 0; n < iz.size - i.getTips().size() * 4; n += 4) {
 					instructions.addInstruction(" DW 0");
 				}
 			}
