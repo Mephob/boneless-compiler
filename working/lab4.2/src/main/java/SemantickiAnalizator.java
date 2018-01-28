@@ -74,25 +74,19 @@ public class SemantickiAnalizator {
 		//System.out.print(String.format("bchevkwr%d", 'v'));
 		//System.out.println(String.join(" ", vnfjn));
 
-//		for (int n = 1; n <= 1231; n++) {
+		//for (int n = 1; n <= 1231; n++) {
 //			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + n + ".in")), System.out);
-			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + 4 + ".in")), System.out);
-//		System.out.println(Integer.toString('a'));
-//		System.out.println(Integer.toString('b'));
-//		System.out.println(Integer.toString('\0'));
-//		System.out.println(Integer.toString('A'));
+			String s = realMain(Files.newInputStream(Paths.get("../../../shit/test/" + "zbr385" + ".in")), System.out);
+			//String s = realMain(Files.newInputStream(Paths.get("../../../tudje/FER-PPJ/res/examples/codegen-in/01_ret_broj.in")), System.out);
+			//List<String> lines = Files.readAllLines(Paths.get("../../../shit/input/" + n + ".in"));
 			System.out.println(s);
 //			List<String> ls = Files.readAllLines(Paths.get("../../../shit/ocekivani_output/" + n + ".out"));
-//			if ((s.isEmpty() && ls.isEmpty()) || (!ls.isEmpty() && s.equals(ls.get(0)))) {
-//				System.out.println("../../../shit/input/" + n + ".out OK");
-//				continue;
+//			if (ls.isEmpty()) {
+//				//System.out.println("../../../shit/input/" + n + ".out OK");
+//				Files.write(Paths.get("../../../shit/test/" + n + ".in"), Files.readAllBytes(Paths.get("../../../shit/input/" + n + ".in")));
+//				Files.write(Paths.get("../../../shit/test/" + n + ".c"), Files.readAllBytes(Paths.get("../../../shit/input/" + n + ".c")));
 //			}
-//			System.out.println(">>>>in: ../../../shit/input/" + n + ".in");
-//			System.out.println(s);
-//			System.out.println("Should be:");
-//			System.out.println(ls.isEmpty() ? "" : ls.get(0));
-//			System.out.println("#-------------------------------------------------------#");
-//			//break;
+			//break;
 //		}
 	}
 

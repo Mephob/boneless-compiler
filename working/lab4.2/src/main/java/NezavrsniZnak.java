@@ -386,6 +386,8 @@ class LogIIzraz extends NezavrsniZnak {
 
 	private Boolean lIzraz;
 
+	int id;
+
 	protected LogIIzraz(Node parent) {
 		super("<log_i_izraz>", parent);
 	}
@@ -407,6 +409,8 @@ class LogIIzraz extends NezavrsniZnak {
 class LogIliIzraz extends NezavrsniZnak {
 
 	private Boolean lIzraz;
+
+	int id;
 
 	protected LogIliIzraz(Node parent) {
 		super("<log_ili_izraz>", parent);

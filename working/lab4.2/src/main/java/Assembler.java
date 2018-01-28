@@ -329,8 +329,8 @@ class Assembler implements NodeVisitor {
 			pi.setlIzraz(!buff.isConstant && !(buff instanceof Funkcija) && !buff.primitiv.isArray());
 
 			String adress = "";
-			out: for (int i = initDeklaratori.size() - 1; i > 0; i--) {
-				for (String s : initDeklaratori.get(i).keySet()) {
+			out: for (int i = addresses.size() - 1; i >= 0; i--) {
+				for (String s : addresses.get(i).keySet()) {
 					if (s.equals(((IDN) prvi).getValue())) {
 						adress = addresses.get(i).get(s);
 						break out;
@@ -339,6 +339,7 @@ class Assembler implements NodeVisitor {
 			}
 
 			if (!adress.isEmpty()) {
+				//System.err.println("for: " + adress + ":  s");
 				String[] a = adress.split(" ");
 				if (a.length == 1) {
 					instructions.addInstruction(String.format(" MOVE %s, R0", adress));
@@ -361,13 +362,13 @@ class Assembler implements NodeVisitor {
 			addPUSH("R0");
 		} else if (prvi instanceof ZNAK) {
 			pi.setTip(Tip.character);
-			instructions.addInstruction(" MOVE " + Integer.toString(((ZNAK) prvi).getCharValue()) + ", R0" );
+			instructions.addInstruction(" MOVE 0" + Integer.toString(((ZNAK) prvi).getCharValue(), 16) + ", R0" );
 			addPUSH("R0");
 		} else if (prvi instanceof NIZ_ZNAKOVA) {
 			pi.setTip(Tip.constCharA);
 			char[] chars = ((NIZ_ZNAKOVA) prvi).getCharacters();
 			for (int n = 0; n < chars.length; n++) {
-				instructions.addInstruction(" MOVE " + Integer.toString(chars[n]) + ", R0");
+				instructions.addInstruction(" MOVE 0" + Integer.toString(chars[n], 16) + ", R0");
 				addPUSH("R0");
 			}
 		} else if (prvi instanceof L_ZAGRADA) {
@@ -472,6 +473,8 @@ class Assembler implements NodeVisitor {
 
 			//##################poziv funkcije
 			addCALL(((Funkcija) prvi.getTip()).name, false);
+			moveSP(4, false);
+			addPUSH("R6");
 		} else if (drugi instanceof L_ZAGRADA && treci instanceof ListaArgumenata) {
 
 			int buff = onStack;
@@ -480,14 +483,16 @@ class Assembler implements NodeVisitor {
 			if (!isFunction(prvi.getTip(), null, ((ListaArgumenata) treci).getTips())) {
 				throw new SemAnalysisException(generateMessage(pi));
 			}
+			buff = onStack - buff;
 
 			ListaArgumenata la = (ListaArgumenata) treci;
 			//###########################poziv funkcije
 			//push je napravljen u listaArgumenata
 			addCALL(((Funkcija) prvi.getTip()).name, false);
+			moveSP(4, false);
 
-			buff = onStack - buff;
 			moveSP(buff, true);
+			addPUSH("R6");
 		} else {
 			throw new IllegalStateException(generateMessage(pi));
 		}
@@ -648,12 +653,13 @@ class Assembler implements NodeVisitor {
 
 			//###################################################################
 			if (mi.children.get(1) instanceof OP_PUTA) {
-				addCALL("MUL", true);
+				addCALL("MUL", false);
 			} else if (mi.children.get(1) instanceof OP_DIJELI) {
-				addCALL("DIV", true);
+				addCALL("DIV", false);
 			} else if (mi.children.get(1) instanceof OP_MOD) {
-				addCALL("MOD", true);
+				addCALL("MOD", false);
 			}
+			moveSP(4, false);
 
 			//clearStackOf(8, true);
 			moveSP(8, true);
@@ -730,12 +736,13 @@ class Assembler implements NodeVisitor {
 			}
 
 			instructions.addInstruction(" MOVE 0, R0");
-			addPUSH("R0");
+
 			instructions.addInstruction(" JP OIEND" + broj);
 			instructions.addInstruction("OI" + broj + " MOVE -1, R0");
-			instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
+			//instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
 			//addPUSH("R0");
 			instructions.addInstruction("OIEND" + broj);
+			addPUSH("R0");
 		}
 	}
 
@@ -765,18 +772,19 @@ class Assembler implements NodeVisitor {
 			addPOP("R0");
 			instructions.addInstruction(" CMP R0, R1");
 			if (ji.children.get(1) instanceof OP_EQ) {
-				instructions.addInstruction(" JP_SLT JI" + broj);
-			} else if (ji.children.get(1) instanceof OP_NEG) {
-				instructions.addInstruction(" JP_SGT JI" + broj);
+				instructions.addInstruction(" JP_EQ JI" + broj);
+			} else if (ji.children.get(1) instanceof OP_NEQ) {
+				instructions.addInstruction(" JP_NE JI" + broj);
 			}
 
 			instructions.addInstruction(" MOVE 0, R0");
-			addPUSH("R0");
+
 			instructions.addInstruction(" JP JIEND" + broj);
 			instructions.addInstruction("JI" + broj + " MOVE -1, R0");
-			instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
+			//instructions.addInstruction(" PUSH R0"); //tu ne addPush jer ce mislit da je 2 put pushano ali samo je jednom
 			//addPUSH("R0");
 			instructions.addInstruction("JIEND" + broj);
+			addPUSH("R0");
 		}
 	}
 
@@ -873,8 +881,20 @@ class Assembler implements NodeVisitor {
 			lii.setTip(x.getTip());
 			lii.setlIzraz(x.getlIzraz());
 		} else {
+			lii.id = br;
 			int broj = br;
 			br++;
+
+			Node parent = lii;
+			while (parent instanceof LogIIzraz) {
+				if (!(parent.getParent() instanceof LogIIzraz)) {
+					break;
+				}
+
+				parent = parent.getParent();
+			}
+
+			LogIIzraz liiP = (LogIIzraz) parent;
 
 			LogIIzraz y = (LogIIzraz) lii.children.get(0);
 			y.acceptVisitor(this);
@@ -884,7 +904,7 @@ class Assembler implements NodeVisitor {
 			addPOP("R0");
 			instructions.addInstruction(" MOVE 0, R2");
 			instructions.addInstruction(" CMP R0, R2");
-			instructions.addInstruction(" JP_EQ LOGIFALSE" + broj);
+			instructions.addInstruction(" JP_EQ LOGIFALSE" + liiP.id);
 
 			x.acceptVisitor(this);
 			if (!x.getTip().isImplCastable(Tip.integer))
@@ -893,8 +913,9 @@ class Assembler implements NodeVisitor {
 			lii.setlIzraz(false);
 
 			addPOP("R1");
+			instructions.addInstruction(" MOVE 0, R2");
 			instructions.addInstruction(" CMP R1, R2");
-			instructions.addInstruction(" JP_EQ LOGIFALSE" + broj);
+			instructions.addInstruction(" JP_EQ LOGIFALSE" + liiP.id);
 			instructions.addInstruction(" MOVE -1, R3");
 			instructions.addInstruction(" JP LOGIEND" + broj);
 
@@ -915,8 +936,20 @@ class Assembler implements NodeVisitor {
 			lii.setTip(x.getTip());
 			lii.setlIzraz(x.getlIzraz());
 		} else {
+			lii.id = br;
 			int broj = br;
 			br++;
+
+			Node parent = lii;
+			while (parent instanceof LogIliIzraz) {
+				if (!(parent.getParent() instanceof LogIliIzraz)) {
+					break;
+				}
+
+				parent = parent.getParent();
+			}
+
+			LogIliIzraz liiP = (LogIliIzraz) parent;
 
 			LogIliIzraz y = (LogIliIzraz) lii.children.get(0);
 			y.acceptVisitor(this);
@@ -926,7 +959,7 @@ class Assembler implements NodeVisitor {
 			addPOP("R0");
 			instructions.addInstruction(" MOVE 0, R2");
 			instructions.addInstruction(" CMP R0, R2");
-			instructions.addInstruction(" JP_NEQ LOGILITRUE" + broj);
+			instructions.addInstruction(" JP_NE LOGILITRUE" + liiP.id);
 
 			x.acceptVisitor(this);
 			if (!x.getTip().isImplCastable(Tip.integer))
@@ -935,8 +968,9 @@ class Assembler implements NodeVisitor {
 			lii.setlIzraz(false);
 
 			addPOP("R1");
+			instructions.addInstruction(" MOVE 0, R2");
 			instructions.addInstruction(" CMP R1, R2");
-			instructions.addInstruction(" JP_NEQ LOGILITRUE" + broj);
+			instructions.addInstruction(" JP_NE LOGILITRUE" + liiP.id);
 			instructions.addInstruction(" MOVE 0, R3");
 			instructions.addInstruction(" JP LOGILIEND" + broj);
 
@@ -996,21 +1030,32 @@ class Assembler implements NodeVisitor {
 		enterDeeper();
 		if (sn.getParent() instanceof DefinicijaFunkcije) {
 			DefinicijaFunkcije def = (DefinicijaFunkcije) sn.getParent();
-			for (int i = 0, j = def.getParamNames().size() - 1; i < def.getParamNames().size(); i++, j--) {
+			for (int i = 0, j = def.getParamNames().size() - 1, sum = 0; i < def.getParamNames().size(); i++, j--) {
 				initDeklaratori.peek().put(def.getParamNames().get(i), def.getFunc().args.get(i));
 				//################################################################################
 				// push na stog, ici kroz razine, naci variablu, i uzet sa te adrese
 				//mislim da ne
-				addresses.peek().put(def.getParamNames().get(i), "SP + " + Integer.toHexString((def.getParamNames().size() - 1 - i)*4));
+				//addresses.peek().put(def.getParamNames().get(i), "SP + 0" + Integer.toHexString(4 + (def.getParamNames().size() - 1 - i)*4));
+				addresses.peek().put(def.getParamNames().get(j), "SP + 0" + Integer.toHexString(4 + sum));
+				sum += 4;
 			}
 		}
 
+//		if (sn.children.get(1) instanceof ListaDeklaracija) {
+//			sn.onStack = ((ListaDeklaracija) sn.children.get(1)).size;
+//		}
 		sn.onStack = onStack;
+
+		//System.err.println(sn.onStack);
 		visitChildren(sn);
 		//#######################################
 		//new
-		if (!(sn.getParent() instanceof DefinicijaFunkcije) && sn.children.get(1) instanceof ListaDeklaracija) {
-			moveSP(((ListaDeklaracija)sn.children.get(1)).size, true);
+//		if (!(sn.getParent() instanceof DefinicijaFunkcije) && sn.children.get(1) instanceof ListaDeklaracija) {
+//			moveSP(((ListaDeklaracija)sn.children.get(1)).size, true);
+//		}
+		if (!(sn.getParent() instanceof DefinicijaFunkcije) && !(sn.getParent().getParent() instanceof NaredbaGrananja)) {
+			instructions.addInstruction(";clearing slozenaNaredba");
+			moveSP(onStack - sn.onStack, true);
 		}
 
 		stepOut();
@@ -1047,6 +1092,8 @@ class Assembler implements NodeVisitor {
 		int broj = br;
 		br++;
 
+		int ifOnStack = onStack;
+
 		ng.children.get(2).acceptVisitor(this);
 
 		addPOP("R0");
@@ -1056,12 +1103,17 @@ class Assembler implements NodeVisitor {
 		if (!((Izraz) ng.children.get(2)).getTip().isImplCastable(Tip.integer))
 			throw new SemAnalysisException(generateMessage(ng));
 
-		instructions.addInstruction("infend" + broj);
 
 		ng.children.get(4).acceptVisitor(this);
+		moveSP(onStack - ifOnStack, onStack > ifOnStack);
+		instructions.addInstruction(" JP ifpost" + broj);
+		instructions.addInstruction("ifend" + broj);
+
 		if (ng.children.size() == 7) {
 			ng.children.get(6).acceptVisitor(this);
+			moveSP(onStack - ifOnStack, onStack > ifOnStack);
 		}
+		instructions.addInstruction("ifpost" + broj);
 	}
 
 
@@ -1086,7 +1138,7 @@ class Assembler implements NodeVisitor {
 				int buff = onStack;
 				np.children.get(4).acceptVisitor(this);
 
-				instructions.addInstruction("petljainkr" + broj +" JP petlja" +  broj);
+				instructions.addInstruction("petljainkr" + broj +" JP petlja" +  broj);//todo tu moras cistit, ne u slozena_naredba
 				instructions.addInstruction("petljafin" + broj);
 				buff = onStack - buff;
 				moveSP(buff, true);
@@ -1178,8 +1230,12 @@ class Assembler implements NodeVisitor {
 			}
 
 			DefinicijaFunkcije df = (DefinicijaFunkcije) n;
+			instructions.addInstruction(";exiting function");
 			addPOP("R6");//vrati to prek R6
-			moveSP(onStack - ((SlozenaNaredba) df.children.get(df.children.size() - 1)).onStack, true);
+			int x = ((SlozenaNaredba) df.children.get(df.children.size() - 1)).onStack;
+			moveSP(onStack-x, onStack > x);//todo
+			//System.err.println(">>" + onStack);
+			//System.err.println("<>" + ((SlozenaNaredba) df.children.get(df.children.size() - 1)).onStack);
 			addRET();
 		} else {
 			Node n;
@@ -1205,12 +1261,93 @@ class Assembler implements NodeVisitor {
 	public void accept(PrijevodnaJedinica pj) {//ok
 		if (pj.getDepth() == 0) {
 			instructions.addInstruction(" MOVE 40000, R7");
+			//addCALL("main", false);
 			instructions.addInstruction(" CALL main");
 			//instructions.addInstruction(" POP R6");
 			instructions.addInstruction(" HALT");
 			enterDeeper();
 		}
 		visitChildren(pj);
+
+		if (pj.getDepth() == 0) {
+			instructions.addInstruction("MUL  LOAD R5, (SP + 0)\n" +
+				  "   LOAD R0, (SP + 4)\n" +
+				  "   LOAD R1, (SP + 8)\n" +
+				  "     CMP R0, 0\n" +
+				  "     JP_Z GOTOVP\n" +
+				  "     CMP R1, 0\n" +
+				  "     JP_Z GOTOVP\n" +
+				  "     MOVE R0,R2\n" +
+				  "     CMP R1, 0\n" +
+				  "     JP_N OPETN\n" +
+				  "OPETP SUB R1,%D 1,R1\n" +
+				  "     JP_Z GOTOVP\n" +
+				  "     ADD R2,R0,R2\n" +
+				  "     JP OPETP\n" +
+				  "OPETN ADD R1, 1, R1\n" +
+				  "     JP_Z GOTOVN\n" +
+				  "     ADD R2,R0,R2\n" +
+				  "     JP OPETN\n" +
+				  "GOTOVP     MOVE R2, R6\n" +
+				  "     RET\n" +
+				  "GOTOVN XOR R2, -1, R2\n" +
+				  "     ADD R2, 1, R2\n" +
+				  "     MOVE R2, R6\n" +
+				  "     RET");
+			instructions.addInstruction("DIV   LOAD R5, (SP + 0)\n" +
+				  "   LOAD R0, (SP + 4)\n" +
+				  "   LOAD R1, (SP + 8)\n" +
+				  "   MOVE 0, R2\n" +
+				  "   CMP R0, R2\n" +
+				  "   JP_N neg1\n" +
+				  "   JP pr3\n" +
+				  "   MOVE 0, R2 ; rezultat dijeljenja\n" +
+				  "neg1 XOR R0, -1, R0\n" +
+				  "     ADD R0, 1, R0\n" +
+				  "     MOVE 0, R2\n" +
+				  "pr2  CMP R1, R2\n" +
+				  "     JP_N neg2\n" +
+				  "     JP PETLJA2\n" +
+				  "neg2 XOR R1, -1, R1\n" +
+				  "     ADD R1, 1, R1\n" +
+				  "     MOVE 0, R2\n" +
+				  "     JP PETLJA\n" +
+				  "pr3 MOVE 0, R2\n" +
+				  "    CMP R1, R2\n" +
+				  "    JP_N neg3\n" +
+				  "    JP PETLJA\n" +
+				  "neg3 XOR R1, -1, R1\n" +
+				  "     ADD R1, 1, R1\n" +
+				  "     MOVE 0, R2\n" +
+				  "     JP PETLJA2\n" +
+				  "PETLJA SUB R0, R1, R0 ; oduzeti djelitelj od djeljenika\n" +
+				  "   JR_ULT GOTOVOP ; ako nije uspjelo, onda je kraj\n" +
+				  "   ADD R2, 1, R2 ; ako je uspjelo, pove?ati rezultat\n" +
+				  "   JR PETLJA\n" +
+				  "PETLJA2 SUB R0, R1, R0 ; oduzeti djelitelj od djeljenika\n" +
+				  "   JR_ULT GOTOVON ; ako nije uspjelo, onda je kraj\n" +
+				  "   ADD R2, 1, R2 ; ako je uspjelo, pove?ati rezultat\n" +
+				  "   JR PETLJA2\n" +
+				  "GOTOVOP\n" +
+				  "    MOVE R2, R6 ;spremiti rezultat\n" +
+				  "    RET\n" +
+				  "GOTOVON\n" +
+				  "    XOR R2, -1, R2\n" +
+				  "    ADD R2, 1, R2\n" +
+				  "    MOVE R2, R6 ;spremiti rezultat\n" +
+				  "    RET");
+			instructions.addInstruction("MOD LOAD R5, (SP + 0)\n" +
+				  "   LOAD R0, (SP + 4)\n" +
+				  "   LOAD R1, (SP + 8)\n" +
+				  "    MOVE 0, R2\n" +
+				  "H_PETLJA SUB R0, R1, R0 ;oduzeti djelitelj od djeljenika\n" +
+				  "    JR_ULT H_GOTOVO ;ako nije uspjelo, onda je kraj\n" +
+				  "    ADD R2, 1, R2 ;ako je uspjelo, pove?ati rezultat\n" +
+				  "    JR H_PETLJA\n" +
+				  "H_GOTOVO ADD R0, R1, R0\n" +
+				  "    MOVE R0, R6 ;spremiti rezultat\n" +
+				  "    RET");
+		}
 	}
 
 
@@ -1449,7 +1586,7 @@ class Assembler implements NodeVisitor {
 					addresses.peek().put(idn.getValue(), idn.getValue());
 					instructions.addInstruction(idn.getValue());//genrirra labelu
 					for (int i = 0; i < id.getWhatInBracket(); i++) {
-						instructions.addInstruction("DW %D 0");
+						instructions.addInstruction(" DW %D 0");
 					}
 				} else {
 					id.size = 4;
