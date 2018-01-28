@@ -380,11 +380,15 @@ class Assembler implements NodeVisitor {
 				}
 				parent = parent.getParent();
 				UnarniIzraz ui = (UnarniIzraz) parent;
+				if (ui.getParent() instanceof UnarniIzraz) {
+					ui = (UnarniIzraz) ui.getParent();
+				}
 				if (ui.children.get(0) instanceof OP_DEC) {
 					instructions.addInstruction(" DW 0" + Integer.toHexString(-((BROJ) prvi).getIntValue()));
 				} else if (ui.children.get(0) instanceof OP_INC || ui.children.get(0) instanceof PostfiksIzraz) {
 					instructions.addInstruction(" DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
 				}
+
 //				else if (ui.children.get(0) instanceof UnarniOperator) {
 //					UnarniOperator uo = (UnarniOperator) ui.children.get(0);
 //					if (uo.children.get(0) instanceof MINUS) {
@@ -397,7 +401,7 @@ class Assembler implements NodeVisitor {
 			} else {
 				if (((BROJ) prvi).getIntValue() > 1000000) {
 					instructions.addInstruction("buff" + br + " DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
-					instructions.addInstruction(" LOAD R0, buff" + br);
+					instructions.addInstruction(" LOAD R0, (buff" + br + ")");
 					br++;
 				} else {
 					instructions.addInstruction(String.format(" MOVE 0%s, R0", Integer.toHexString(((BROJ) prvi).getIntValue())));
