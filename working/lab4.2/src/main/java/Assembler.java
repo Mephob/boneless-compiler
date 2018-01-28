@@ -24,7 +24,7 @@ class Assembler implements NodeVisitor {
 
 	private Stack<Map<String, String>> addresses = new Stack<>();
 
-	private Stack<List<String>> parameters= new Stack<>();
+	private Stack<List<String>> parameters = new Stack<>();
 
 	//NO! private int stackPointer = 0x400000;
 
@@ -372,7 +372,7 @@ class Assembler implements NodeVisitor {
 		} else if (prvi instanceof BROJ) {
 			pi.setTip(Tip.integer);
 			if (initDeklaratori.size() == 1) {
-				instructions.addInstruction(" DW " + Integer.toHexString(((BROJ) prvi).getIntValue()));
+				instructions.addInstruction(" DW 0" + Integer.toHexString(((BROJ) prvi).getIntValue()));
 			} else {
 				instructions.addInstruction(String.format(" MOVE 0%s, R0", Integer.toHexString(((BROJ) prvi).getIntValue())));
 				addPUSH("R0");
@@ -380,7 +380,7 @@ class Assembler implements NodeVisitor {
 		} else if (prvi instanceof ZNAK) {
 			pi.setTip(Tip.character);
 			if (initDeklaratori.size() == 1) {
-				instructions.addInstruction(" DW " + Integer.toHexString(((ZNAK) prvi).getCharValue()));
+				instructions.addInstruction(" DW 0" + Integer.toHexString(((ZNAK) prvi).getCharValue()));
 			} else {
 				instructions.addInstruction(" MOVE 0" + Integer.toString(((ZNAK) prvi).getCharValue(), 16) + ", R0");
 				addPUSH("R0");
@@ -554,7 +554,7 @@ class Assembler implements NodeVisitor {
 			//ako adresa promijenit u vrijednost ali samo ak ti caca nije unarni_izraz
 
 			boolean x = ui.getTip().primitiv.isArray();
-			System.err.println("for: " + x);
+			//System.err.println("for: " + x);
 			PostfiksIzraz pi = (PostfiksIzraz) ui.children.get(ui.children.size() - 1);
 
 			if (!(ui.getParent() instanceof UnarniIzraz) && ((PostfiksIzraz) ui.children.get(0)).isAdress && !x) {
@@ -563,7 +563,7 @@ class Assembler implements NodeVisitor {
 
 				instructions.addInstruction(" LOAD R1, (R0)");
 				if (pi.children.get(0) instanceof PostfiksIzraz) {
-					PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz)pi.children.get(0)).children.get(0);
+					PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz) pi.children.get(0)).children.get(0);
 					if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {
 						instructions.addInstruction(" LOAD R1, (R1)");
 					}
@@ -1044,7 +1044,7 @@ class Assembler implements NodeVisitor {
 			addPOP("R1");
 			addPOP("R0");
 			if (x.children.get(0) instanceof PostfiksIzraz) {
-				PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz)x.children.get(0)).children.get(0);
+				PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz) x.children.get(0)).children.get(0);
 				if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {
 					instructions.addInstruction(" LOAD R0, (R0)");
 				}
@@ -1575,6 +1575,10 @@ class Assembler implements NodeVisitor {
 			if (iz.getTip().isConstant) {
 				throw new SemAnalysisException(generateMessage(id));
 			}
+
+			for (int i = 0; i < iz.size; i += 4) {
+				instructions.addInstruction(" DW 0");
+			}
 		} else {
 			Inicijalizator i = (Inicijalizator) id.children.get(2);
 			if (iz.getTip().primitiv.equals(int.class) || iz.getTip().primitiv.equals(char.class)) {
@@ -1593,6 +1597,11 @@ class Assembler implements NodeVisitor {
 				});
 			} else {
 				throw new SemAnalysisException(generateMessage(id));
+			}
+			if (i.getTip() == null) {
+				for (int n = 0; n < iz.size - i.getTips().size()*4; n += 4) {
+					instructions.addInstruction(" DW 0");
+				}
 			}
 		}
 	}
@@ -1633,23 +1642,30 @@ class Assembler implements NodeVisitor {
 			}
 
 			if (initDeklaratori.size() == 1) {//globalna variable, labele
+				instructions.addInstruction(idn.getValue());
 				if (id.children.size() > 1) {
-					id.size = id.getWhatInBracket();
-					initDeklaratori.peek().get(idn.getValue()).size = id.getWhatInBracket() * 4;
-					//initDeklaratori.peek().get(idn.getValue()).adress = idn.getValue();
-					addresses.peek().put(idn.getValue(), idn.getValue());
-					instructions.addInstruction(idn.getValue());//genrirra labelu
-					for (int i = 0; i < id.getWhatInBracket(); i++) {
-						instructions.addInstruction(" DW %D 0");
-					}
+					id.size = id.getWhatInBracket() * 4;
 				} else {
 					id.size = 4;
-					initDeklaratori.peek().get(idn.getValue()).size = 4;
-					//initDeklaratori.peek().get(idn.getValue()).adress = idn.getValue();
-					addresses.peek().put(idn.getValue(), idn.getValue());
-
-					instructions.addInstruction(idn.getValue() + " DW %D 0");//generira labelu
 				}
+				addresses.peek().put(idn.getValue(), idn.getValue());
+//				if (id.children.size() > 1) {
+//					id.size = id.getWhatInBracket();
+//					initDeklaratori.peek().get(idn.getValue()).size = id.getWhatInBracket() * 4;
+//					//initDeklaratori.peek().get(idn.getValue()).adress = idn.getValue();
+//					addresses.peek().put(idn.getValue(), idn.getValue());
+//					instructions.addInstruction(idn.getValue());//genrirra labelu
+//					for (int i = 0; i < id.getWhatInBracket(); i++) {
+//						instructions.addInstruction(" DW %D 0");
+//					}
+//				} else {
+//					id.size = 4;
+//					initDeklaratori.peek().get(idn.getValue()).size = 4;
+//					//initDeklaratori.peek().get(idn.getValue()).adress = idn.getValue();
+//					addresses.peek().put(idn.getValue(), idn.getValue());
+//
+//					instructions.addInstruction(idn.getValue() + " DW %D 0");//generira labelu
+//				}
 			} else {//lokalne variable
 				if (id.children.size() > 1) {
 					id.size = id.getWhatInBracket();
