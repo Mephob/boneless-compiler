@@ -76,7 +76,7 @@ public class SemantickiAnalizator {
 
 		//for (int n = 1; n <= 1231; n++) {
 //			String s = realMain(Files.newInputStream(Paths.get("../../../shit/input/" + n + ".in")), System.out);
-			String s = realMain(Files.newInputStream(Paths.get("../../../shit/test/" + "pokazivaci" + ".in")), System.out);
+			String s = realMain(Files.newInputStream(Paths.get("../../../shit/test/" + "fibonacci" + ".in")), System.out);
 			//String s = realMain(Files.newInputStream(Paths.get("../../../tudje/FER-PPJ/res/examples/codegen-in/01_ret_broj.in")), System.out);
 			//List<String> lines = Files.readAllLines(Paths.get("../../../shit/input/" + n + ".in"));
 			System.out.println(s);

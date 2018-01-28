@@ -564,7 +564,7 @@ class Assembler implements NodeVisitor {
 				instructions.addInstruction(" LOAD R1, (R0)");
 				if (pi.children.get(0) instanceof PostfiksIzraz) {
 					PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz)pi.children.get(0)).children.get(0);
-					if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {//todo
+					if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {
 						instructions.addInstruction(" LOAD R1, (R1)");
 					}
 				}
@@ -1045,7 +1045,7 @@ class Assembler implements NodeVisitor {
 			addPOP("R0");
 			if (x.children.get(0) instanceof PostfiksIzraz) {
 				PrimarniIzraz p = (PrimarniIzraz) ((PostfiksIzraz)x.children.get(0)).children.get(0);
-				if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {//todo
+				if (parameters.peek().contains(((IDN) p.children.get(0)).getValue())) {
 					instructions.addInstruction(" LOAD R0, (R0)");
 				}
 			}
@@ -1109,7 +1109,9 @@ class Assembler implements NodeVisitor {
 			moveSP(onStack - sn.onStack, true);
 		}
 
-		parameters.pop();
+		if (sn.getParent() instanceof DefinicijaFunkcije) {
+			parameters.pop();
+		}
 		stepOut();
 	}
 
